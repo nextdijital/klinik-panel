@@ -1,0 +1,83 @@
+# ============================================================
+# KlinikMod - Production .htaccess
+# ============================================================
+
+# PHP Hata Gösterimini Kapat (Production)
+php_flag display_errors off
+php_flag display_startup_errors off
+php_value error_reporting 0
+
+# Dizin Listelemeyi Engelle
+Options -Indexes
+
+# Sunucu İmzasını Gizle
+ServerSignature Off
+
+# ============================================================
+# Hassas Dosya ve Klasörlere Erişimi Engelle
+# ============================================================
+
+# scratch klasörüne dışarıdan erişimi engelle
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # scratch/ klasörüne doğrudan erişimi tamamen engelle
+    RewriteRule ^scratch/.*$ - [F,L]
+
+    # update_db.php dosyasına erişimi engelle
+    RewriteRule ^update_db\.php$ - [F,L]
+
+    # database.sql dosyasına erişimi engelle
+    RewriteRule ^database\.sql$ - [F,L]
+
+    # .db dosyalarına erişimi engelle
+    RewriteRule \.db$ - [F,L]
+</IfModule>
+
+# config/ klasörüne doğrudan browser erişimini engelle
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(sql|db|log|sh|env)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+# Eski Apache 2.2 uyumluluğu için
+<FilesMatch "\.(sql|db|log|sh|env)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# ============================================================
+# Güvenlik Başlıkları
+# ============================================================
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ============================================================
+# Performans: Statik Dosyalar için Önbellek
+# ============================================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpg "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType font/woff "access plus 1 year"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# ============================================================
+# Gzip Sıkıştırma
+# ============================================================
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css application/javascript text/javascript application/json
+</IfModule>
