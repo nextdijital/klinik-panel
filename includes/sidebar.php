@@ -51,6 +51,14 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <span class="nav-label"><?= __('settings') ?></span>
             </a>
         </li>
+        <?php if(is_admin()): ?>
+        <li>
+            <a href="users.php" class="nav-link-icon <?= ($current_page == 'users.php') ? 'active' : '' ?>" title="Kullanıcı Yönetimi">
+                <i class="fa-solid fa-users-gear"></i>
+                <span class="nav-label">Kullanıcılar</span>
+            </a>
+        </li>
+        <?php endif; ?>
     </ul>
 
     <div class="sidebar-footer" style="display: flex; flex-direction: column; align-items: center; margin-top: auto; padding-bottom: 20px;">

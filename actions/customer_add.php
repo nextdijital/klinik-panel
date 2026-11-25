@@ -12,6 +12,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         json_response('error', 'Lütfen tüm zorunlu alanları doldurun.');
     }
 
+    // Mükerrer kayıt kontrolü (Ad, Soyad ve Telefon aynıysa ve silinmemişse)
+    $check = $db->prepare("SELECT id FROM customers WHERE first_name = ? AND last_name = ? AND phone = ? AND is_deleted = 0");
+    $check->execute([$first_name, $last_name, $phone]);
+    if ($check->fetch()) {
+        json_response('error', 'Bu isim, soyisim ve telefon numarasına sahip bir müşteri zaten kayıtlı.');
+    }
+
     try {
         $stmt = $db->prepare("INSERT INTO customers (first_name, last_name, phone, email) VALUES (?, ?, ?, ?)");
         $stmt->execute([$first_name, $last_name, $phone, $email]);

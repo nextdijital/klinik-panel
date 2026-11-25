@@ -1,5 +1,4 @@
 /* KlinikMod - TimeFrame Aesthetic Redesign */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
     --primary: #8687C3; 
@@ -28,6 +27,20 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+html, body {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    user-select: none !important;
+}
+
+/* Input ve Textarea alanlarında seçimi ve yazmayı geri açıyoruz */
+input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text !important;
+    user-select: text !important;
 }
 
 body {
@@ -2173,6 +2186,7 @@ input:checked + .slider-pill .text-off { opacity: 0; transform: translateX(10px)
     letter-spacing: -0.5px;
 }
 
+.login-card h1,
 .login-card h2 {
     font-size: 32px;
     font-weight: 800;
@@ -2481,6 +2495,7 @@ input:checked + .slider-pill .text-off { opacity: 0; transform: translateX(10px)
         border-radius: 35px;
     }
     
+    .login-card h1,
     .login-card h2 {
         font-size: 28px;
     }
@@ -2584,7 +2599,9 @@ input:checked + .slider-pill .text-off { opacity: 0; transform: translateX(10px)
 }
 
 .patient-block-card {
-    max-width: 220px !important;
+    min-width: 270px !important;
+    max-width: 360px !important;
+    padding-right: 56px !important;
 }
 /* --- Priority Modal Refined Styles --- */
 .priority-container-centered {
@@ -3230,8 +3247,9 @@ input:checked + .slider-pill .text-off { opacity: 0; transform: translateX(10px)
 
     .sidebar-footer {
         width: 100%;
-        padding: 0 15px !important;
+        padding: 0 15px 120px !important; /* Alt boÅŸluk iyice artÄ±rÄ±ldÄ± (120px), butonu yukarı iyice tırmandırdık */
         align-items: flex-start !important;
+        margin-top: auto !important;
     }
 
 

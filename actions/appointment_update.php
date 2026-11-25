@@ -54,23 +54,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // 3. Randevuyu Güncelle
+            // 3. Randevuyu Güncelle (Güncellenen randevuyu otomatik 'Bekliyor' durumuna çek)
+            $stmt_old_apt = $db->prepare("SELECT status, package_id FROM appointments WHERE id = ?");
+            $stmt_old_apt->execute([$id]);
+            $old_apt = $stmt_old_apt->fetch();
+            $old_status = $old_apt['status'] ?? 'pending';
+            $old_pkg_id = (int)($old_apt['package_id'] ?? 0);
+
+            $package_id = isset($_POST['package_id']) ? (!empty($_POST['package_id']) ? (int)$_POST['package_id'] : null) : ($old_apt['package_id'] ?? null);
+            $is_package_session = ($package_id > 0) ? 1 : 0;
+
+            // Eğer randevu önceden 'completed' idi ve şimdi 'pending' oluyorsa seansı pakete iade et
+            if ($old_status === 'completed' && $old_pkg_id > 0) {
+                $db->prepare("UPDATE customer_packages SET used_sessions = GREATEST(0, used_sessions - 1), status = IF(used_sessions - 1 < total_sessions, 'active', status) WHERE id = ?")->execute([$old_pkg_id]);
+            }
+
             $stmt = $db->prepare("UPDATE appointments SET 
                                     service_id = ?, 
                                     staff_id = ?,
                                     category_id = ?,
+                                    package_id = ?,
+                                    is_package_session = ?,
                                     appointment_date = ?, 
                                     appointment_time = ?, 
                                     base_price = ?,
                                     discount_type = ?,
                                     discount_value = ?,
                                     service_price = ?,
-                                    notes = ?
+                                    notes = ?,
+                                    status = 'pending'
                                   WHERE id = ?");
             $stmt->execute([
                 $service_id, 
                 $staff_id,
                 $category_id,
+                $package_id,
+                $is_package_session,
                 $appointment_date, 
                 $appointment_time, 
                 $base_price,
@@ -94,20 +113,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
 
-            // 5. Finans Kaydını Güncelle (Tüm Hizmetlerin İsimlerini Al)
-            $all_service_ids = array_merge([$service_id], $extra_services);
-            $service_names = [];
-            foreach ($all_service_ids as $sid) {
-                if (empty($sid)) continue;
-                $stmt_sn = $db->prepare("SELECT name FROM services WHERE id = ?");
-                $stmt_sn->execute([$sid]);
-                $s_name = $stmt_sn->fetchColumn();
-                if ($s_name) $service_names[] = $s_name;
-            }
-            
-            $desc = "Randevu Güncelleme: " . implode(', ', $service_names);
-            $stmt_fin = $db->prepare("UPDATE finance SET amount = ?, description = ? WHERE appointment_id = ? AND type = 'income'");
-            $stmt_fin->execute([$service_price, $desc, $id]);
+            // 5. Finans Kaydını Temizle (Randevu tekrar 'Bekliyor' olduğu için eski kayıt silinmeli)
+            $stmt_fin = $db->prepare("DELETE FROM finance WHERE appointment_id = ?");
+            $stmt_fin->execute([$id]);
 
             $db->commit();
             json_response('success', 'Randevu başarıyla güncellendi.' . ($warning_msg ? ' (Not: ' . $warning_msg . ')' : ''), ['warning' => $warning_msg]);

@@ -29,9 +29,23 @@ $query = "SELECT a.id,
                  a.service_id,
                  a.staff_id,
                  a.category_id,
+                 a.package_id,
+                 a.is_package_session,
+                 cp.package_name,
                  CONCAT(c.first_name, ' ', c.last_name) as title, 
                  c.phone as customer_phone,
                  s.name as service_name,
+                 s.total_sessions,
+                 (
+                     SELECT COUNT(*)
+                     FROM appointments a2
+                     WHERE a2.customer_id = a.customer_id 
+                       AND a2.service_id = a.service_id 
+                       AND a2.is_deleted = 0 
+                       AND a2.status != 'cancelled'
+                       AND (a2.appointment_date < a.appointment_date 
+                            OR (a2.appointment_date = a.appointment_date AND (a2.appointment_time < a.appointment_time OR (a2.appointment_time = a.appointment_time AND a2.id <= a.id))))
+                 ) as session_num,
                  ac.name as category_name,
                  CONCAT(st.first_name, ' ', st.last_name) as staff_name,
                  a.notes,
@@ -44,6 +58,7 @@ $query = "SELECT a.id,
                  DATE_ADD(CONCAT(a.appointment_date, ' ', a.appointment_time), INTERVAL s.duration MINUTE) as end,
                  CASE 
                     WHEN a.status = 'cancelled' THEN '$cancelled_color' 
+                    WHEN a.status = 'missed' THEN '#5D4037'
                     WHEN (SELECT COUNT(*) FROM appointment_extras WHERE appointment_id = a.id) > 0 THEN '$multiple_services_color'
                     ELSE COALESCE(ac.color, s.color, '#8687C3')
                  END as backgroundColor,
@@ -54,19 +69,27 @@ $query = "SELECT a.id,
                   WHERE ae.appointment_id = a.id) as extraServices,
                  (SELECT GROUP_CONCAT(ae2.service_id) 
                   FROM appointment_extras ae2 
-                  WHERE ae2.appointment_id = a.id) as extraServiceIds
+                  WHERE ae2.appointment_id = a.id) as extraServiceIds,
+                 CASE WHEN a.status IN ('completed', 'missed') THEN 0 ELSE 1 END as editable
           FROM appointments a
           JOIN customers c ON a.customer_id = c.id
           JOIN services s ON a.service_id = s.id
           LEFT JOIN staff st ON a.staff_id = st.id
           LEFT JOIN appointment_categories ac ON a.category_id = ac.id
+          LEFT JOIN customer_packages cp ON a.package_id = cp.id
           WHERE a.is_deleted = 0 
           AND c.is_deleted = 0 
           AND s.is_deleted = 0
           AND (a.staff_id IS NULL OR st.is_deleted = 0)
           AND a.appointment_date BETWEEN ? AND ?
-          AND (a.status = 'pending' OR (a.status = 'cancelled' AND a.updated_at > ?))
-          AND MINUTE(a.appointment_time) IN (0, 30)";
+          AND (
+            a.status = 'pending' 
+            OR (a.status = 'cancelled' AND a.updated_at > ?) 
+            OR (a.status = 'completed' AND a.appointment_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY))
+            OR (a.status = 'missed' AND a.appointment_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY))
+          )
+          AND MINUTE(a.appointment_time) IN (0, 30)
+          ORDER BY a.appointment_time ASC";
 
 $stmt = $db->prepare($query);
 $stmt->execute([
@@ -74,7 +97,12 @@ $stmt->execute([
     substr($end, 0, 10), 
     $cutoff_date
 ]);
-$events = $stmt->fetchAll();
+$events = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// FullCalendar için editable değerini gerçek boolean yapalım
+foreach ($events as &$event) {
+    $event['editable'] = (bool)$event['editable'];
+}
 
 echo json_encode($events);
 ?>

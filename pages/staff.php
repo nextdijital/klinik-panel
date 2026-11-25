@@ -19,7 +19,7 @@
         </div>
     </div>
 
-    <div style="overflow-x: auto;" class="premium-table-scroll">
+    <div style="overflow-x: auto; overflow-y: auto; flex: 1; min-height: 0;" class="premium-table-scroll custom-scroll">
         <table style="width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed;">
             <thead>
                 <tr style="color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(165,166,216,0.1);">

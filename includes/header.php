@@ -12,8 +12,8 @@ $today_appts_count = $stmt_appts->fetchColumn();
 // Bugünün Geliri (Ciro)
 $today_income = $db->query("SELECT SUM(amount) FROM finance WHERE type = 'income' AND DATE(created_at) = CURDATE()")->fetchColumn() ?? 0;
 
-// Son 24 Saatlik Gelir
-$last_24h_income = $db->query("SELECT SUM(amount) FROM finance WHERE type = 'income' AND created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)")->fetchColumn() ?? 0;
+// Son 12 Saatlik Gelir
+$last_12h_income = $db->query("SELECT SUM(amount) FROM finance WHERE type = 'income' AND created_at >= DATE_SUB(NOW(), INTERVAL 12 HOUR)")->fetchColumn() ?? 0;
 
 // Tüm Zamanlar Brüt Gelir (Ciro)
 $total_income = $db->query("SELECT SUM(amount) FROM finance WHERE type = 'income'")->fetchColumn() ?? 0;
@@ -40,7 +40,7 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
     
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../assets/css/style.css?v=1.1.5">
+    <link rel="stylesheet" href="../assets/css/style.css?v=1.6">
     <link rel="stylesheet" href="../assets/css/premium_select.css?v=1.0.1">
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -118,40 +118,101 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
                 $select.addClass('premium-select-native').before($wrapper);
                 $wrapper.append($select).append($display).append($list);
 
+                // Arama Kutusu Ekle
+                const $searchWrapper = $('<div class="premium-select-search-wrapper"></div>');
+                const $searchContainer = $('<div class="premium-select-search-container"></div>');
+                $searchContainer.append('<i class="fa-solid fa-magnifying-glass"></i>');
+                const $searchInput = $('<input type="text" class="premium-select-search-input" placeholder="Ara...">');
+                $searchContainer.append($searchInput);
+                $searchWrapper.append($searchContainer);
+                $list.append($searchWrapper);
+
+                const $optionsContainer = $('<div class="premium-options-container"></div>');
+                $list.append($optionsContainer);
+
                 // Initial display
                 const $selected = $select.find('option:selected');
                 const selectedText = $selected.length && $selected.val() !== "" ? $selected.text() : ($select.find('option:first').text() || 'Seçiniz...');
                 $display.text(selectedText);
 
                 // Options
-                $list.empty(); // Temizle
-                $select.find('option').each(function() {
-                    const $opt = $(this);
-                    const isSelected = $opt.is(':selected');
-                    const val = $opt.val();
-                    const text = $opt.text().trim();
-                    
-                    // Boş değer veya "Seçiniz" ifadesi içerenleri listeden kesin olarak çıkar
-                    if (val === "" || text === "" || text.toLowerCase().includes('seçiniz')) return;
-                    
-                    // İkon eşleştirme
-                    let icon = 'fa-chevron-right'; 
-                    const selectName = $select.attr('name') || '';
-                    const optText = text.toLowerCase();
+                function renderOptions() {
+                    $optionsContainer.empty();
+                    $select.find('option').each(function() {
+                        const $opt = $(this);
+                        const isSelected = $opt.is(':selected');
+                        const val = $opt.val();
+                        const text = $opt.text().trim();
+                        
+                        if (val === "" || text === "" || text.toLowerCase().includes('seçiniz')) return;
+                        
+                        let icon = 'fa-chevron-right'; 
+                        const selectName = $select.attr('name') || '';
+                        const optText = text.toLowerCase();
 
-                    if (selectName.toLowerCase().indexOf('customer') !== -1) icon = 'fa-user';
-                    else if (selectName.toLowerCase().indexOf('service') !== -1) icon = 'fa-stethoscope';
-                    else if (selectName.toLowerCase().indexOf('staff') !== -1) icon = 'fa-user-doctor';
-                    else if (optText.includes('gelir')) icon = 'fa-arrow-trend-up';
-                    else if (optText.includes('gider')) icon = 'fa-arrow-trend-down';
-                    else if (selectName.toLowerCase().indexOf('type') !== -1) icon = 'fa-tags';
+                        if (selectName.toLowerCase().indexOf('customer') !== -1) icon = 'fa-user';
+                        else if (selectName.toLowerCase().indexOf('service') !== -1) icon = 'fa-stethoscope';
+                        else if (selectName.toLowerCase().indexOf('staff') !== -1) icon = 'fa-user-doctor';
+                        else if (optText.includes('gelir')) icon = 'fa-arrow-trend-up';
+                        else if (optText.includes('gider')) icon = 'fa-arrow-trend-down';
+                        else if (selectName.toLowerCase().indexOf('type') !== -1) icon = 'fa-tags';
+                        
+                        const $customOpt = $('<div class="premium-select-option"></div>')
+                            .html(`<i class="fa-solid ${icon}"></i> <span>${text}</span>`)
+                            .attr('data-value', val);
+                        
+                        if (isSelected) $customOpt.addClass('selected');
+                        $optionsContainer.append($customOpt);
+                    });
+                }
+                renderOptions();
+
+                // Search Logic
+                $searchInput.on('click', function(e) {
+                    e.stopPropagation(); // Tıklayınca kapanmasını engelle
+                });
+
+                $searchInput.on('input', function(e) {
+                    const rawVal = $(this).val();
+                    const term = rawVal.toLocaleLowerCase('tr-TR').trim();
+                    const termNoSpace = term.replace(/\s/g, '');
+                    const tokens = term.split(/\s+/).filter(t => t.length > 0);
                     
-                    const $customOpt = $('<div class="premium-select-option"></div>')
-                        .html(`<i class="fa-solid ${icon}"></i> <span>${text}</span>`)
-                        .attr('data-value', val);
+                    let found = 0;
                     
-                    if (isSelected) $customOpt.addClass('selected');
-                    $list.append($customOpt);
+                    $optionsContainer.find('.premium-select-option').each(function() {
+                        const originalTxt = $(this).text();
+                        const txt = originalTxt.toLocaleLowerCase('tr-TR');
+                        const txtNoSpace = txt.replace(/\s/g, '');
+                        
+                        let isMatch = false;
+                        
+                        if (term === "") {
+                            isMatch = true;
+                        } else {
+                            // Esnek Arama Mantığı:
+                            // 1. Kelime bazlı arama (Tüm kelimeler geçiyor mu?)
+                            let tokenMatch = tokens.length > 0 && tokens.every(token => txt.indexOf(token) > -1);
+                            
+                            // 2. Boşluksuz arama (ahmetcan -> Ahmet Can eşleşsin)
+                            let noSpaceMatch = txtNoSpace.indexOf(termNoSpace) > -1;
+                            
+                            isMatch = tokenMatch || noSpaceMatch;
+                        }
+
+                        if (isMatch) {
+                            $(this).removeClass('hidden');
+                            found++;
+                        } else {
+                            $(this).addClass('hidden');
+                        }
+                    });
+
+                    // No results message
+                    $list.find('.no-results-msg').remove();
+                    if (found === 0 && term !== "") {
+                        $optionsContainer.append('<div class="no-results-msg">Sonuç bulunamadı</div>');
+                    }
                 });
 
                 // Toggle
@@ -160,6 +221,12 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
                     const isActive = $wrapper.hasClass('active');
                     $('.premium-select-wrapper').not($wrapper).removeClass('active');
                     $wrapper.toggleClass('active');
+                    
+                    if ($wrapper.hasClass('active')) {
+                        setTimeout(() => $searchInput.focus(), 50);
+                    } else {
+                        $searchInput.val('').trigger('input');
+                    }
                 });
 
                 // Choice
@@ -174,6 +241,7 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
                     $list.find('.premium-select-option').removeClass('selected');
                     $(this).addClass('selected');
                     $wrapper.removeClass('active');
+                    $searchInput.val('').trigger('input');
                 });
 
                 // Sync if native select changes externally
@@ -248,7 +316,7 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
     <div class="app-container">
         <?php include '../includes/sidebar.php'; ?>
         
-        <div class="main-wrapper">
+        <main class="main-wrapper">
             <!-- Top Navigation -->
             <nav class="top-nav">
                 <div class="nav-brand desktop-only">
@@ -260,12 +328,42 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
                         'finance.php' => 'Finans Yönetimi',
                         'staff.php' => 'Personel Yönetimi',
                         'services.php' => 'Hizmet Yönetimi',
-                        'settings.php' => 'Ayarlar'
+                        'settings.php' => 'Ayarlar',
+                        'users.php' => 'Kullanıcı Yönetimi'
                     ];
-                    $display_title = $page_titles[basename($_SERVER['PHP_SELF'])] ?? 'KlinikMod';
+                    $current_page = basename($_SERVER['PHP_SELF']);
+                    $display_title = $page_titles[$current_page] ?? 'KlinikMod';
+
+                    if ($current_page === 'dashboard.php'): 
+                        // Yaklaşan Randevu Sayısı (Header Butonu İçin)
+                        $header_upcoming_count = $db->query("SELECT COUNT(*) FROM appointments WHERE appointment_date = CURDATE() AND appointment_time >= CURTIME() AND status = 'pending' AND is_deleted = 0")->fetchColumn();
                     ?>
-                    <h2><?= $display_title ?></h2>
-                    <p style="color: var(--text-muted); font-size: 14px;">Bilgileriniz en doğru içgörüler için tasarlandı</p>
+                        <div class="header-quick-actions">
+                            <button class="quick-action-btn upcoming" onclick="openUpcomingModal()">
+                                <i class="fa-solid fa-calendar-day"></i>
+                                <span>Yaklaşanlar</span>
+                                <?php if($header_upcoming_count > 0): ?>
+                                    <span class="count-badge"><?= $header_upcoming_count ?></span>
+                                <?php endif; ?>
+                            </button>
+                            <div class="action-divider"></div>
+                            <button class="quick-action-btn" onclick="openAddModal('customer')">
+                                <i class="fa-solid fa-user-plus"></i>
+                                <span>Müşteri</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="openAddModal('service')">
+                                <i class="fa-solid fa-briefcase-medical"></i>
+                                <span>Hizmet</span>
+                            </button>
+                            <button class="quick-action-btn" onclick="openAddModal('staff')">
+                                <i class="fa-solid fa-user-doctor"></i>
+                                <span>Personel</span>
+                            </button>
+                        </div>
+                    <?php else: ?>
+                        <h2><?= $display_title ?></h2>
+                        <p style="color: var(--text-muted); font-size: 14px;">Bilgileriniz en doğru içgörüler için tasarlandı</p>
+                    <?php endif; ?>
                 </div>
 
 
@@ -275,7 +373,7 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
                         <span>Onay Bekleyen <b id="pending-count">0</b> Randevu</span>
                     </button>
                     <div class="header-stats">
-                        <?php if ($is_finance_page): ?>
+                        <?php if ($is_finance_page && is_admin()): ?>
                             <?php 
                             // Filtreleme yapılmışsa bu değerleri kullan, yoksa varsayılan header değerlerini
                             $display_income = isset($filtered_income) ? $filtered_income : $total_income;
@@ -283,9 +381,9 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
                             $display_net = isset($filtered_net) ? $filtered_net : $net_profit;
                             $is_filtering = isset($is_filtered) && $is_filtered;
                             ?>
-                            <div class="stat-item stat-24h">
-                                <span class="label"><?= $is_filtering ? 'Seçili Gelir' : '24S Gelir' ?></span>
-                                <span class="value" style="color: var(--accent-lime-dark); font-size: 15px;"><?= number_format($is_filtering ? $display_income : $last_24h_income, 0) ?> <?= $currency ?></span>
+                            <div class="stat-item stat-12h">
+                                <span class="label"><?= $is_filtering ? 'Seçili Gelir' : '12S Gelir' ?></span>
+                                <span class="value" style="color: var(--accent-lime-dark); font-size: 15px;"><?= number_format($is_filtering ? $display_income : $last_12h_income, 0) ?> <?= $currency ?></span>
                             </div>
                             <div class="stat-item stat-all">
                                 <span class="label"><?= $is_filtering ? 'Seçili Gider' : 'Tüm Gelir' ?></span>
@@ -297,10 +395,12 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
                             </div>
 <?php endif; ?>
                         <?php if (!$is_finance_page): ?>
+                            <?php if(is_admin()): ?>
                             <div class="stat-item stat-income">
                                 <span class="label">Bugünkü Gelir</span>
                                 <span class="value" style="color: var(--primary);"><?= number_format($today_income, 0) ?> <?= $currency ?></span>
                             </div>
+                            <?php endif; ?>
                             <div class="stat-item stat-appt">
                                 <span class="label">Randevu</span>
                                 <span class="value" style="color: #3b5a0a;"><?= $today_appts_count ?></span>
@@ -323,6 +423,27 @@ $currency = $db->query("SELECT setting_value FROM settings WHERE setting_key = '
                     </div>
                 </div>
             </nav>
+
+            <?php
+            // Sayfa erişim izni kontrolü - izin yoksa blur overlay göster
+            $permission_pages = ['dashboard','appointments','customers','services','staff','finance','settings'];
+            $_current_page_key = str_replace('.php', '', basename($_SERVER['PHP_SELF']));
+            if (in_array($_current_page_key, $permission_pages) && !has_page_permission($_current_page_key)):
+            ?>
+            <div id="permission-denied-overlay" style="position:fixed;inset:0;z-index:9900;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(248,250,252,0.70);">
+                <div style="background:#ffffff;border-radius:28px;padding:52px 44px;text-align:center;max-width:440px;width:90%;box-shadow:0 24px 80px rgba(165,166,216,0.28),0 8px 24px rgba(0,0,0,0.08);border:1px solid rgba(165,166,216,0.18);animation:fadeInScale .35s cubic-bezier(.4,0,.2,1);">
+                    <div style="width:88px;height:88px;background:linear-gradient(135deg,rgba(165,166,216,0.15),rgba(165,166,216,0.05));border:2px solid rgba(165,166,216,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 28px;">
+                        <i class="fa-solid fa-lock" style="font-size:38px;color:var(--primary);"></i>
+                    </div>
+                    <h2 style="margin:0 0 14px;font-size:24px;font-weight:800;color:#1e1e2e;letter-spacing:-0.5px;">Erişim Kısıtlandı</h2>
+                    <p style="margin:0 0 32px;color:#64748b;font-size:15px;line-height:1.7;">Bu sayfayı görüntüleme yetkiniz bulunmamaktadır.<br>Sistem yöneticinizle iletişime geçiniz.</p>
+                    <a href="dashboard.php" style="display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,var(--primary),#8384c0);color:white;padding:15px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 4px 16px rgba(165,166,216,0.35);transition:all .3s;">
+                        <i class="fa-solid fa-house"></i> Dashboard'a Dön
+                    </a>
+                </div>
+            </div>
+            <style>@keyframes fadeInScale{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}</style>
+            <?php endif; ?>
 
             <script>
             function toggleSidebar() {

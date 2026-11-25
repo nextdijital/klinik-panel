@@ -1,4 +1,8 @@
 <?php
+// Gzip Output Compression (Sayfa yanıt boyutunu %90+ küçülterek anında yüklenmesini sağlar)
+if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
+    ini_set('zlib.output_compression', '1');
+}
 ob_start();
 // functions.php - Core functions for KlinikMod
 
@@ -109,4 +113,22 @@ function archive_expired_appointments() {
 
 // Run cleanup on every page load if logged in
 archive_expired_appointments();
+
+// ============================================================
+// Kullanıcı Yetki Kontrol Fonksiyonları
+// ============================================================
+
+// Oturumdaki kullanıcının admin olup olmadığını döner
+function is_admin() {
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
+}
+
+// Belirtilen sayfa anahtarı için kullanıcının erişim yetkisini kontrol eder
+// Admin her zaman true döner; diğerleri için session'daki permissions dizisine bakılır
+function has_page_permission($page_key) {
+    if (is_admin()) return true;
+    $perms = $_SESSION['permissions'] ?? [];
+    if (empty($perms) || !is_array($perms)) return false;
+    return in_array($page_key, $perms);
+}
 ?>

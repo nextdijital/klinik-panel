@@ -8,14 +8,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
     $amount = (float)($_POST['amount'] ?? 0);
     $type = clean($_POST['type'] ?? '');
     $description = clean($_POST['description'] ?? '');
+    $payment_method = clean($_POST['payment_method'] ?? 'cash');
 
-    if ($id <= 0 || $amount <= 0 || !in_array($type, ['income', 'expense']) || empty($description)) {
+    if ($id <= 0 || $amount < 0 || !in_array($type, ['income', 'expense']) || empty($description)) {
         json_response('error', 'Lütfen geçerli veriler girin.');
     }
 
     try {
-        $stmt = $db->prepare("UPDATE finance SET amount = ?, type = ?, description = ? WHERE id = ?");
-        $stmt->execute([$amount, $type, $description, $id]);
+        $stmt = $db->prepare("UPDATE finance SET amount = ?, type = ?, description = ?, payment_method = ? WHERE id = ?");
+        $stmt->execute([$amount, $type, $description, $payment_method, $id]);
         json_response('success', 'Kayıt başarıyla güncellendi.');
     } catch (PDOException $e) {
         json_response('error', 'Hata: ' . $e->getMessage());

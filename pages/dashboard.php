@@ -17,25 +17,134 @@ $slotMaxTime = date('H:i:s', strtotime($cal_end . ' +30 minutes'));
 .custom-scroll::-webkit-scrollbar { width: 4px; }
 .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 .custom-scroll::-webkit-scrollbar-thumb { background: rgba(134, 135, 195, 0.2); border-radius: 10px; }
+
 @keyframes pulse {
     0% { transform: scale(1); opacity: 1; }
     50% { transform: scale(1.05); opacity: 0.8; }
     100% { transform: scale(1); opacity: 1; }
 }
 
-/* Takvim Etkinlik Stilleri */
+/* Header Quick Action Butonları */
+.header-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: 5px;
+}
+.quick-action-btn {
+    background: white;
+    border: 1px solid rgba(134, 135, 195, 0.15);
+    padding: 10px 18px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--text-main);
+    font-weight: 700;
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+    position: relative;
+}
+.quick-action-btn i {
+    font-size: 16px;
+    color: var(--primary);
+}
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(134, 135, 195, 0.12);
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+}
+.quick-action-btn:hover i { color: white; }
+
+.quick-action-btn.upcoming {
+    background: #fff5f5;
+    border-color: rgba(244, 63, 94, 0.1);
+}
+.quick-action-btn.upcoming i { color: #f43f5e; }
+.quick-action-btn.upcoming:hover {
+    background: #f43f5e;
+    border-color: #f43f5e;
+}
+
+.count-badge {
+    background: #f43f5e;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 2px 5px rgba(244, 63, 94, 0.3);
+}
+
+.action-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(134, 135, 195, 0.2);
+    margin: 0 5px;
+}
+
+/* Takvim Genişletme */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+    padding: 20px;
+}
+
+@media (max-width: 1024px) {
+    .calendar-header-wrapper {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 20px !important;
+        padding: 20px 15px !important;
+    }
+    .calendar-header-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+    .calendar-header-actions > * {
+        width: 100% !important;
+        justify-content: center !important;
+        min-height: 50px !important;
+    }
+    #calendar-current-date {
+        justify-content: center !important;
+    }
+    .calendar-nav-pill {
+        width: 100% !important;
+        justify-content: center !important;
+        flex-wrap: wrap !important;
+        height: auto !important;
+        padding: 10px !important;
+    }
+}
+.left-widgets { display: none !important; }
+
+.large-calendar-container {
+    width: 100% !important;
+}
+
+/* Takvim Etkinlik Stilleri (Geri Yüklenen) */
 .fc-event {
     border: none !important;
     background: transparent !important;
     padding: 0 !important;
     margin: 1px 0 !important;
-    transition: opacity 0.2s ease; /* Sürüklemeyi bozmamak için sadece opaklık geçişi kalsın */
+    transition: opacity 0.2s ease;
 }
-.fc-event:hover {
-    z-index: 5 !important;
-}
-.fc-event-dragging, 
-.fc-event-dragging .fc-event-inner {
+.fc-event:hover { z-index: 5 !important; }
+.fc-event-dragging, .fc-event-dragging .fc-event-inner {
     transition: none !important; 
     animation: none !important;
     opacity: 0.8 !important;
@@ -47,7 +156,6 @@ $slotMaxTime = date('H:i:s', strtotime($cal_end . ' +30 minutes'));
     border: none !important;
     box-shadow: none !important;
 }
-/* Randevu Hizmet Etiketleri (Pill Tags) */
 .service-tags-container {
     display: flex;
     flex-wrap: wrap;
@@ -65,36 +173,7 @@ $slotMaxTime = date('H:i:s', strtotime($cal_end . ' +30 minutes'));
     align-items: center;
     gap: 8px;
     border: 1px solid rgba(46, 90, 39, 0.1);
-    animation: tagFadeIn 0.2s ease;
 }
-.service-pill .remove-pill {
-    cursor: pointer;
-    background: rgba(46, 90, 39, 0.1);
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    transition: all 0.2s ease;
-}
-.service-pill .remove-pill:hover {
-    background: var(--danger);
-    color: white;
-}
-@keyframes tagFadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Randevu Blokları (Pistachio Pill - Dinamik Dikey Düzen) */
-.fc-event {
-    margin: 2px 4px !important;
-    border: none !important;
-    background: transparent !important;
-}
-
 .fc-event-inner {
     padding: 6px 10px !important;
     border-radius: 8px !important;
@@ -105,55 +184,11 @@ $slotMaxTime = date('H:i:s', strtotime($cal_end . ' +30 minutes'));
     box-shadow: 0 2px 8px rgba(0,0,0,0.03);
     display: flex !important;
     flex-direction: column !important;
-    align-items: flex-start !important;
-    justify-content: center !important;
     min-height: 38px !important;
     width: 100% !important;
     overflow: hidden;
-    transition: background 0.2s ease, transform 0.2s ease;
     border: 1px solid rgba(46, 90, 39, 0.05) !important;
 }
-
-.fc-event-title-custom {
-    color: white;
-    font-size: 13px;
-    font-weight: 800;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    width: 100%;
-    line-height: 1.2;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-.fc-event-time-custom {
-    font-size: 10px;
-    font-weight: 800;
-    color: rgba(255, 255, 255, 0.9);
-    margin-top: 1px;
-}
-
-/* Dinamik Uzayan DayGrid Ayarları */
-.fc-daygrid-day-frame {
-    min-height: 100px !important;
-    padding-bottom: 10px !important;
-}
-.fc-daygrid-event-harness {
-    margin: 2px 0 !important;
-}
-.fc-daygrid-day-number {
-    font-weight: 800 !important;
-    color: var(--text-muted) !important;
-    font-size: 13px !important;
-    padding: 10px !important;
-}
-.fc-timegrid-event {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-}
-
-
-
 .btn-danger-premium {
     background: #f43f5e;
     color: white;
@@ -161,62 +196,57 @@ $slotMaxTime = date('H:i:s', strtotime($cal_end . ' +30 minutes'));
     border-radius: 12px;
     font-size: 14px;
     font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s ease;
     border: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    text-decoration: none;
     box-shadow: 0 4px 15px rgba(244, 63, 94, 0.2);
 }
-
 .btn-danger-premium:hover {
     background: #e11d48;
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(244, 63, 94, 0.3);
 }
-
-.confirm-wrapper {
+/* Ödeme Yöntemi Butonları */
+.payment-methods-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-top: 10px;
+}
+.pay-method-btn {
+    background: white;
+    border: 1px solid rgba(134, 135, 195, 0.15);
+    padding: 12px 5px;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px 0;
-    text-align: center;
-}
-
-.confirm-icon {
-    width: 70px;
-    height: 70px;
-    background: rgba(244, 63, 94, 0.1);
-    color: #f43f5e;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    margin-bottom: 20px;
-}
-
-.confirm-title {
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--text-main);
-    margin-bottom: 10px;
-}
-
-.confirm-text {
-    font-size: 14px;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
     color: var(--text-muted);
-    max-width: 250px;
-    line-height: 1.6;
+}
+.pay-method-btn i { font-size: 18px; }
+.pay-method-btn span { font-size: 12px; font-weight: 700; }
+
+.pay-method-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: rgba(134, 135, 195, 0.05);
+}
+
+.pay-method-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(134, 135, 195, 0.2);
 }
 </style>
 <?php
 // ModalDropdownları için verileri çekelim
 $customers_list = $db->query("SELECT id, first_name, last_name FROM customers WHERE is_deleted = 0 ORDER BY first_name ASC")->fetchAll();
-$services_list = $db->query("SELECT id, name, price FROM services WHERE is_deleted = 0 AND status = 1 ORDER BY name ASC")->fetchAll();
+$services_list = $db->query("SELECT id, name, price, total_sessions FROM services WHERE is_deleted = 0 AND status = 1 ORDER BY name ASC")->fetchAll();
 $staff_list = $db->query("SELECT id, first_name, last_name FROM staff WHERE status = 1 AND is_deleted = 0 ORDER BY first_name ASC")->fetchAll();
 
 // Yaklaşan Randevular (Hala gelmemiş ve önümüzdeki 6 saat içindekiler)
@@ -258,7 +288,7 @@ $upcoming_appts = $db->query("
                 <?php else: ?>
                     <div id="upcoming-list" style="display: flex; flex-direction: column; gap: 12px;">
                         <?php foreach($upcoming_appts as $appt): ?>
-                            <div class="upcoming-item-card" id="upcoming-<?= $appt['id'] ?>" data-time="<?= date('Y-m-d') ?>T<?= $appt['appointment_time'] ?>" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(134, 135, 195, 0.03); border-radius: 12px; border: 1px solid rgba(134, 135, 195, 0.05); transition: all 0.3s ease;">
+                            <div class="upcoming-item-card" id="upcoming-<?= $appt['id'] ?>" data-time="<?= date('Y-m-d') ?> <?= $appt['appointment_time'] ?>" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(134, 135, 195, 0.03); border-radius: 12px; border: 1px solid rgba(134, 135, 195, 0.05); transition: all 0.3s ease;">
                                 <div style="width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0;">
                                     <?= date('H:i', strtotime($appt['appointment_time'])) ?>
                                 </div>
@@ -331,11 +361,22 @@ $upcoming_appts = $db->query("
                 </div>
             </div>
 
-            <button class="btn-premium" onclick="openAddModal()">
-                <i class="fa-solid fa-plus"></i>
-                <span>Randevu Ekle</span>
-            </button>
+            <div class="calendar-header-actions" style="display: flex; gap: 10px; align-items: center;">
+                <div id="calendar-current-date" style="background: white; border: 1px solid rgba(134, 135, 195, 0.15); padding: 10px 18px; border-radius: 14px; color: var(--text-main); font-weight: 700; font-size: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.02); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-regular fa-calendar-check" style="color: var(--primary);"></i>
+                    <span>-</span>
+                </div>
+                <button class="btn-premium" onclick="downloadCalendarPDF()" style="background: #2D2E42; border: none; min-width: 80px;">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>PDF</span>
+                </button>
+                <button class="btn-premium" onclick="openAddModal()">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Randevu Ekle</span>
+                </button>
+            </div>
         </div>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
         <div id="calendar"></div>
     </div>
 </div>
@@ -370,11 +411,17 @@ $upcoming_appts = $db->query("
                         <select id="service-selector" class="form-control" onchange="addServiceTag(this)">
                             <option value="">Hizmet eklemek için seçin...</option>
                             <?php foreach($services_list as $s): ?>
-                                <option value="<?= $s['id'] ?>" data-price="<?= $s['price'] ?>"><?= $s['name'] ?> (<?= number_format($s['price'],0) ?> <?= $currency ?>)</option>
+                                <option value="<?= $s['id'] ?>" data-price="<?= $s['price'] ?>" data-sessions="<?= $s['total_sessions'] ?? 1 ?>"><?= $s['name'] ?> (<?= number_format($s['price'],0) ?> <?= $currency ?><?= ($s['total_sessions'] ?? 1) > 1 ? " - {$s['total_sessions']} Seanslık Paket" : "" ?>)</option>
                             <?php endforeach; ?>
                         </select>
                         <input type="hidden" name="service_id" id="main-service-id" required>
                         <div id="selected-services-tags" class="service-tags-container"></div>
+                        <div id="service-package-notice" style="display: none; margin-top: 10px; background: rgba(39, 174, 96, 0.08); border: 1px solid rgba(39, 174, 96, 0.25); border-radius: 12px; padding: 10px 14px;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-gift" style="color: #27ae60; font-size: 15px;"></i>
+                                <span id="service-package-notice-text" style="font-size: 13px; font-weight: 700; color: #219653;"></span>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -612,7 +659,6 @@ $upcoming_appts = $db->query("
             <button type="button" class="btn-danger-premium" style="width: 100%;" onclick="updateStatus(window.currentEventId, 'cancelled')">
                 <i class="fa-solid fa-ban"></i> Randevuyu İptal Et
             </button>
-            <button type="button" class="btn-secondary" style="width: 100%;" onclick="$('#detailModal').hide()">Kapat</button>
         </div>
     </div>
 </div>
@@ -686,7 +732,46 @@ $upcoming_appts = $db->query("
     </div>
 </div>
 
+<!-- Yaklaşan Randevular Modalı -->
+<div id="upcomingModal" class="modal-overlay">
+    <div class="modal-container" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Yaklaşan Randevular</h3>
+            <button class="modal-close" onclick="$('#upcomingModal').hide()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="modal-body custom-scroll" style="max-height: 410px; overflow-y: auto; padding: 20px;">
+            <?php if(empty($upcoming_appts)): ?>
+                <div style="text-align:center; padding: 40px 10px; color: var(--text-muted); font-size: 13px;">
+                    <i class="fa-solid fa-calendar-check" style="font-size: 32px; opacity: 0.2; display: block; margin-bottom: 15px;"></i>
+                    Önümüzdeki saatlerde bekleyen randevu bulunmuyor.
+                </div>
+            <?php else: ?>
+                <div id="upcoming-list" style="display: flex; flex-direction: column; gap: 15px;">
+                    <?php foreach($upcoming_appts as $appt): ?>
+                        <div class="upcoming-item-card" id="upcoming-<?= $appt['id'] ?>" data-time="<?= date('Y-m-d') ?> <?= $appt['appointment_time'] ?>" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(134, 135, 195, 0.05); border-radius: 16px; border: 1px solid rgba(134, 135, 195, 0.1); transition: all 0.3s ease;">
+                            <div style="width: 50px; height: 50px; background: var(--primary); color: white; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; box-shadow: 0 4px 10px rgba(134, 135, 195, 0.2);">
+                                <span style="font-size: 14px; line-height: 1;"><?= date('H:i', strtotime($appt['appointment_time'])) ?></span>
+                            </div>
+                            <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 15px; font-weight: 800; color: var(--text-main); margin-bottom: 2px;"><?= $appt['first_name'] . ' ' . $appt['last_name'] ?></div>
+                                <div class="countdown-timer" style="font-size: 12px; color: #f43f5e; font-weight: 700; display: flex; align-items: center; gap: 5px;">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <span class="timer-text">--:--</span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
 <script>
+function openUpcomingModal() {
+    $('#upcomingModal').fadeIn(300).css('display', 'flex');
+}
+
 let calendar;
 let isMoveMode = false;
 let pickedEventId = null;
@@ -727,8 +812,10 @@ document.addEventListener('DOMContentLoaded', function() {
         height: window.innerWidth <= 1024 ? 'auto' : '100%',
         expandRows: true,
         stickyHeaderDates: true,
-        aspectRatio: window.innerWidth <= 1024 ? 0.8 : 2.2,
         locale: '<?= $_SESSION['lang'] ?? 'tr' ?>',
+        validRange: {
+            start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]
+        },
         slotMinTime: '<?= $slotMinTime ?>',
         slotMaxTime: '<?= $slotMaxTime ?>',
         allDaySlot: false,
@@ -766,10 +853,34 @@ document.addEventListener('DOMContentLoaded', function() {
         datesSet: function(info) {
             // Takvim her tazelendiğinde hizalama motorunu çalıştır
             setTimeout(alignAppointments, 100);
+
+            // Dinamik Navigasyon Etiketi (AY yerine AY İSMİ)
+            let labelText = "BUGÜN";
+            if (info.view.type.includes('Month')) {
+                // Başlıktan sadece ayı al (Örn: "Nisan 2026" -> "NİSAN")
+                labelText = info.view.title.split(' ')[0].toUpperCase();
+            } else if (info.view.type.includes('Week')) {
+                labelText = "HAFTA";
+            } else if (info.view.type.includes('Day')) {
+                labelText = "GÜN";
+            }
+            $('#calendar-nav-label').text(labelText);
+
+            // Yeni Dinamik Tarih Göstergesi (Sol Buton)
+            const activeDate = info.view.type.includes('Month') ? info.view.currentStart : info.view.activeStart;
+            const formattedDate = activeDate.toLocaleDateString('tr-TR', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            });
+            $('#calendar-current-date span').text(formattedDate);
         },
         eventContent: function(arg) {
             let time = arg.event.start.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             let title = arg.event.title;
+            const status = arg.event.extendedProps.status;
+            const isCompleted = status === 'completed';
+            const isMissed = status === 'missed';
             const bgColor = arg.event.backgroundColor || '#8687C3';
             
             // Zaman eşleşmesi için arka plan kimliğini basıyoruz
@@ -781,9 +892,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             return {
                 html: `
-                    <div data-slot="${slotStr}" data-offset="${offsetM}" style="background: ${bgColor}; border-radius: 10px; height: 100%; width: 100%; display: flex; flex-direction: column; justify-content: center; padding: 6px 10px; overflow: hidden; box-sizing: border-box;">
-                        <div style="color: white; font-size: 13px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height:1.2;">${title}</div>
-                        <div style="color: white; font-size: 11px; font-weight: 700; margin-top:2px;">${time}</div>
+                    <div data-slot="${slotStr}" data-offset="${offsetM}" style="background: ${bgColor}; border-radius: 10px; height: 100%; width: 100%; display: flex; flex-direction: column; justify-content: center; padding: 6px 10px; overflow: hidden; box-sizing: border-box; ${isCompleted || isMissed ? 'opacity: 0.65;' : ''}">
+                        <div style="color: white; font-size: 13px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height:1.2; display: flex; align-items: center; gap: 4px;">
+                            ${isCompleted ? '<i class="fa-solid fa-circle-check" style="font-size: 11px;"></i>' : ''}
+                            ${isMissed ? '<i class="fa-solid fa-circle-xmark" style="font-size: 11px;"></i>' : ''}
+                            <span>${title}</span>
+                        </div>
+                        <div style="color: white; font-size: 11px; font-weight: 700; margin-top:2px; opacity: 0.9;">${time}</div>
                     </div>
                 `
             };
@@ -824,6 +939,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (props.discount_type && props.discount_type !== 'none') {
                 priceHtml += ` <span style="font-size: 11px; color: var(--text-muted); text-decoration: line-through; font-weight: 400; margin-left: 5px;">(${basePrice} <?= $currency ?>)</span>`;
             }
+            if (props.total_sessions > 1) {
+                const sNum = parseInt(props.session_num) || 1;
+                const tot = parseInt(props.total_sessions);
+                const usedInCycle = ((sNum - 1) % tot) + 1;
+                const rem = tot - usedInCycle;
+                const cyc = Math.floor((sNum - 1) / tot) + 1;
+                priceHtml += ` <span style="background: rgba(39, 174, 96, 0.15); color: #219653; font-size: 11px; padding: 2px 8px; border-radius: 6px; font-weight: 800; margin-left: 6px;"><i class="fa-solid fa-box-open"></i> ${usedInCycle}/${tot}. Seans (${rem > 0 ? rem + ' Kaldı' : 'Paket Tamamlandı'})${cyc > 1 ? ' [' + cyc + '. Paket]' : ''}</span>`;
+            } else if (props.package_name) {
+                priceHtml += ` <span style="background: rgba(39, 174, 96, 0.15); color: #219653; font-size: 11px; padding: 2px 7px; border-radius: 6px; font-weight: 700; margin-left: 6px;"><i class="fa-solid fa-box-open"></i> ${props.package_name}</span>`;
+            }
             $('#det-price').html(priceHtml);
 
             // Hizmet rengini backgroundColor'dan al
@@ -832,6 +957,16 @@ document.addEventListener('DOMContentLoaded', function() {
             $('#det-category-color').css('background-color', mainColor);
             
             window.currentEventId = info.event.id;
+
+            // Tamamlanmış, Gelmedi veya İptal edilmiş randevularda sadece İptal butonunu gizle, Düzenle kalsın
+            const status = info.event.extendedProps.status;
+            if (status === 'completed' || status === 'missed' || status === 'cancelled') {
+                $('#detailModal .modal-footer .btn-danger-premium').hide();
+                $('#detailModal .modal-footer .btn-premium').show();
+            } else {
+                $('#detailModal .modal-footer .btn-premium, #detailModal .modal-footer .btn-danger-premium').show();
+            }
+
             $('#detailModal').fadeIn(200).css('display', 'flex');
         },
         eventDrop: function(info) {
@@ -890,213 +1025,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     calendar.render();
 
-    // --- Kesin Çözüm: Hizalama Motoru (Hardware-Synced Semantic Edition) ---
-    function alignAppointments() {
-        // Hem Haftalık hem Günlük görünümü destekle
-        if (calendar.view.type !== 'timeGridWeek' && calendar.view.type !== 'timeGridDay') return; 
-
-        const slotsTrs = Array.from(document.querySelectorAll('.fc-timegrid-slots tr'));
-        if (slotsTrs.length === 0) return;
-        
-        // 1. Önceki tüm esnetmeleri SIFIRLA
-        slotsTrs.forEach(tr => tr.style.removeProperty('height'));
-        const colsTable = document.querySelector('.fc-timegrid-cols table');
-        if (colsTable) colsTable.style.removeProperty('height');
-
-        let defaultSlotHeight = parseFloat(slotsTrs[0].getBoundingClientRect().height) || 40;
-
-        // 2. Her satırın zaman objelerini haritalandır
-        let slotData = [];
-        slotsTrs.forEach((tr) => {
-            let slotTd = tr.querySelector('.fc-timegrid-slot[data-time]');
-            if (slotTd) {
-                slotData.push({ 
-                    time: slotTd.getAttribute('data-time'), 
-                    tr: tr, 
-                    neededHeight: defaultSlotHeight 
-                });
-            }
-        });
-
-        // 3. Orijinal Kutuların İhtiyaç Duyduğu Boyutları Kaydet 
-        document.querySelectorAll('.fc-timegrid-col').forEach(col => {
-            const harnesses = Array.from(col.querySelectorAll('.fc-timegrid-event-harness:not(.fc-event-dragging)'));
-            
-            // Boyut Kaydı (Süre Koruma)
-            harnesses.forEach(h => {
-                if (!h.hasAttribute('data-orig-height')) {
-                    const childRect = h.getBoundingClientRect();
-                    if (childRect.height === 0 && !h.classList.contains('fc-event-mirror')) return;
-                    h.setAttribute('data-orig-height', childRect.height || 48);
-                }
-            });
-            
-            // Mirror (Sürüklenen Hayalet) Tespiti - Daha kararlı koordinat okuma
-            const mirror = col.querySelector('.fc-event-mirror');
-            let mirrorSlotTime = null;
-            if (mirror) {
-                const mirrorRect = mirror.getBoundingClientRect();
-                const mirrorCenterY = mirrorRect.top + (mirrorRect.height / 2); // Merkeze göre hesapla
-                
-                const targetTr = slotData.find(s => {
-                    const trRect = s.tr.getBoundingClientRect();
-                    return mirrorCenterY >= trRect.top && mirrorCenterY < trRect.bottom;
-                });
-                if (targetTr) mirrorSlotTime = targetTr.time;
-            }
-
-            // Satır İhtiyaç Alanını Bulma
-            if (harnesses.length === 0) return;
-            let colGroups = {};
-            harnesses.forEach(h => {
-                let sTime = null;
-                let innerDiv = h.querySelector('[data-slot]');
-                if (innerDiv) {
-                    sTime = innerDiv.getAttribute('data-slot');
-                } else if (h.classList.contains('fc-event-mirror') && mirrorSlotTime) {
-                    sTime = mirrorSlotTime;
-                }
-
-                if (!sTime) return;
-                if (!colGroups[sTime]) colGroups[sTime] = [];
-                colGroups[sTime].push(h);
-            });
-
-            for (let sTime in colGroups) {
-                let sMap = slotData.find(s => s.time === sTime);
-                if (!sMap) continue;
-
-                let totalHeight = 0;
-                colGroups[sTime].forEach(h => {
-                    let origH = parseFloat(h.getAttribute('data-orig-height')) || 44;
-                    let targetH = Math.max(origH, 48); 
-                    totalHeight += targetH + 4; 
-                });
-                
-                if (totalHeight > sMap.neededHeight) {
-                    sMap.neededHeight = totalHeight;
-                }
-            }
-        });
-
-        // 4. ÇİZGİLERİ ESNET
-        slotData.forEach((s) => {
-            s.tr.style.setProperty('height', s.neededHeight + 'px', 'important');
-        });
-
-        const slotsTable = document.querySelector('.fc-timegrid-slots table');
-        if (colsTable && slotsTable) {
-            colsTable.style.setProperty('height', slotsTable.offsetHeight + 'px', 'important');
-        }
-
-        // 5. EVENTLERİ MÜKEMMEL DOM KOORDİNATLARINA GÖRE YAPIŞTIR
-        document.querySelectorAll('.fc-timegrid-col').forEach(col => {
-            const colEventsContainer = col.querySelector('.fc-timegrid-col-events');
-            if (!colEventsContainer) return;
-            
-            const colRect = colEventsContainer.getBoundingClientRect();
-            const harnesses = Array.from(col.querySelectorAll('.fc-timegrid-event-harness:not(.fc-event-dragging)'));
-            
-            let colGroups = {};
-            harnesses.forEach(h => {
-                let sTime = null;
-                let innerDiv = h.querySelector('[data-slot]');
-                if (innerDiv) {
-                    sTime = innerDiv.getAttribute('data-slot');
-                } else if (h.classList.contains('fc-event-mirror')) {
-                    const mirrorRect = h.getBoundingClientRect();
-                    const mirrorCenterY = mirrorRect.top + (mirrorRect.height / 2);
-                    const targetTr = slotData.find(s => {
-                        const trRect = s.tr.getBoundingClientRect();
-                        return mirrorCenterY >= trRect.top && mirrorCenterY < trRect.bottom;
-                    });
-                    if (targetTr) sTime = targetTr.time;
-                }
-
-                if (!sTime) return;
-                if (!colGroups[sTime]) colGroups[sTime] = [];
-                colGroups[sTime].push({h: h, inner: innerDiv});
-            });
-
-            for (let sTime in colGroups) {
-                let sMap = slotData.find(s => s.time === sTime);
-                if (!sMap) continue;
-                
-                let group = colGroups[sTime];
-                group.sort((a,b) => {
-                    if (a.h.classList.contains('fc-event-mirror')) return 1;
-                    if (b.h.classList.contains('fc-event-mirror')) return -1;
-                    return parseInt(a.inner?.getAttribute('data-offset') || 0) - parseInt(b.inner?.getAttribute('data-offset') || 0);
-                });
-                
-                let trRect = sMap.tr.getBoundingClientRect();
-                let currentY = trRect.top - colRect.top; 
-                
-                group.forEach(item => {
-                    const h = item.h;
-                    let origH = parseFloat(h.getAttribute('data-orig-height')) || 44;
-                    let targetH = Math.max(origH, 48); 
-                    
-                    h.style.setProperty('position', 'absolute', 'important');
-                    h.style.setProperty('inset', 'auto', 'important'); 
-                    h.style.setProperty('bottom', 'auto', 'important'); 
-                    h.style.setProperty('top', currentY + 'px', 'important');
-                    h.style.setProperty('height', targetH + 'px', 'important');
-                    h.style.setProperty('width', '96%', 'important');   
-                    h.style.setProperty('left', '2%', 'important'); 
-                    h.style.setProperty('right', 'auto', 'important');
-                    h.style.setProperty('margin', '0', 'important'); 
-                    h.style.setProperty('transform', 'none', 'important'); 
-                    h.style.setProperty('z-index', h.classList.contains('fc-event-mirror') ? '100' : '10', 'important');
-                    
-                    if (item.inner) {
-                        item.inner.style.setProperty('margin', '0', 'important');
-                        item.inner.style.setProperty('width', '100%', 'important');
-                    }
-                    
-                    currentY += targetH + 4; 
-                });
-            }
-        });
-    }
-
     const observer = new MutationObserver(debounce(alignAppointments, 16));
     observer.observe(calendarEl, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
 
-    function debounce(func, wait) {
-        let timeout;
-        return function() {
-            clearTimeout(timeout);
-            timeout = setTimeout(func, wait);
-        };
-    }
-
-    // --- Countdown Logic ---
-    function updateCountdowns() {
-        const now = new Date();
-        document.querySelectorAll('.upcoming-item-card').forEach(card => {
-            const target = new Date(card.getAttribute('data-time'));
-            const diff = target - now;
-
-            if (diff <= 0) {
-                // Zaman doldu - kaldır ve takvimi yenile
-                card.style.opacity = '0';
-                card.style.transform = 'translateX(20px)';
-                setTimeout(() => {
-                    card.remove();
-                    if (calendar) calendar.refetchEvents();
-                }, 300);
-            } else {
-                const minutes = Math.floor(diff / 1000 / 60);
-                const seconds = Math.floor((diff / 1000) % 60);
-                card.querySelector('.countdown-timer').textContent = 
-                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} kaldı`;
-            }
-        });
-    }
-    
-    setInterval(updateCountdowns, 1000);
+    // Initial countdown start
     updateCountdowns();
+    setInterval(updateCountdowns, 1000);
 
     // Flatpickr Initialization
     flatpickr("#appointment_date", {
@@ -1138,7 +1072,6 @@ document.addEventListener('DOMContentLoaded', function() {
         disableMobile: true
     });
 
-
     // Form Submit Handlers
     $('#aptForm').on('submit', function(e) {
         e.preventDefault();
@@ -1171,8 +1104,224 @@ document.addEventListener('DOMContentLoaded', function() {
         $(this).css({'border-color': 'var(--primary)', 'transform': 'scale(1.1)'});
         $('#selected-category-id').val($(this).data('id'));
         $('#selected-category-name').text($(this).attr('title'));
+        
+        // Hızlı servis ekleme modunda renk seçimi için
+        if ($('#quick_service_color').length) {
+            $('#quick_service_color').val($(this).data('color'));
+        }
     });
 });
+
+function alignAppointments() {
+    // Hem Haftalık hem Günlük görünümü destekle
+    if (calendar.view.type !== 'timeGridWeek' && calendar.view.type !== 'timeGridDay') return; 
+
+    const slotsTrs = Array.from(document.querySelectorAll('.fc-timegrid-slots tr'));
+    if (slotsTrs.length === 0) return;
+    
+    // 1. Önceki tüm esnetmeleri SIFIRLA
+    slotsTrs.forEach(tr => tr.style.removeProperty('height'));
+    const colsTable = document.querySelector('.fc-timegrid-cols table');
+    if (colsTable) colsTable.style.removeProperty('height');
+
+    let defaultSlotHeight = parseFloat(slotsTrs[0].getBoundingClientRect().height) || 40;
+
+    // 2. Her satırın zaman objelerini haritalandır
+    let slotData = [];
+    slotsTrs.forEach((tr) => {
+        let slotTd = tr.querySelector('.fc-timegrid-slot[data-time]');
+        if (slotTd) {
+            slotData.push({ 
+                time: slotTd.getAttribute('data-time'), 
+                tr: tr, 
+                neededHeight: defaultSlotHeight 
+            });
+        }
+    });
+
+    // 3. Orijinal Kutuların İhtiyaç Duyduğu Boyutları Kaydet 
+    document.querySelectorAll('.fc-timegrid-col').forEach(col => {
+        const harnesses = Array.from(col.querySelectorAll('.fc-timegrid-event-harness:not(.fc-event-dragging)'));
+        
+        // Boyut Kaydı (Süre Koruma)
+        harnesses.forEach(h => {
+            if (!h.hasAttribute('data-orig-height')) {
+                const childRect = h.getBoundingClientRect();
+                if (childRect.height === 0 && !h.classList.contains('fc-event-mirror')) return;
+                h.setAttribute('data-orig-height', childRect.height || 48);
+            }
+        });
+        
+        // Mirror (Sürüklenen Hayalet) Tespiti - Daha kararlı koordinat okuma
+        const mirror = col.querySelector('.fc-event-mirror');
+        let mirrorSlotTime = null;
+        if (mirror) {
+            const mirrorRect = mirror.getBoundingClientRect();
+            const mirrorCenterY = mirrorRect.top + (mirrorRect.height / 2); // Merkeze göre hesapla
+            
+            const targetTr = slotData.find(s => {
+                const trRect = s.tr.getBoundingClientRect();
+                return mirrorCenterY >= trRect.top && mirrorCenterY < trRect.bottom;
+            });
+            if (targetTr) mirrorSlotTime = targetTr.time;
+        }
+
+        // Satır İhtiyaç Alanını Bulma
+        if (harnesses.length === 0) return;
+        let colGroups = {};
+        harnesses.forEach(h => {
+            let sTime = null;
+            let innerDiv = h.querySelector('[data-slot]');
+            if (innerDiv) {
+                sTime = innerDiv.getAttribute('data-slot');
+            } else if (h.classList.contains('fc-event-mirror') && mirrorSlotTime) {
+                sTime = mirrorSlotTime;
+            }
+
+            if (!sTime) return;
+            if (!colGroups[sTime]) colGroups[sTime] = [];
+            colGroups[sTime].push(h);
+        });
+
+        for (let sTime in colGroups) {
+            let sMap = slotData.find(s => s.time === sTime);
+            if (!sMap) continue;
+
+            let totalHeight = 0;
+            colGroups[sTime].forEach(h => {
+                let origH = parseFloat(h.getAttribute('data-orig-height')) || 44;
+                let targetH = Math.max(origH, 48); 
+                totalHeight += targetH + 4; 
+            });
+            
+            if (totalHeight > sMap.neededHeight) {
+                sMap.neededHeight = totalHeight;
+            }
+        }
+    });
+
+    // 4. ÇİZGİLERİ ESNET
+    slotData.forEach((s) => {
+        s.tr.style.setProperty('height', s.neededHeight + 'px', 'important');
+    });
+
+    const slotsTable = document.querySelector('.fc-timegrid-slots table');
+    if (document.querySelector('.fc-timegrid-cols table') && slotsTable) {
+        document.querySelector('.fc-timegrid-cols table').style.setProperty('height', slotsTable.offsetHeight + 'px', 'important');
+    }
+
+    // 5. EVENTLERİ MÜKEMMEL DOM KOORDİNATLARINA GÖRE YAPIŞTIR
+    document.querySelectorAll('.fc-timegrid-col').forEach(col => {
+        const colEventsContainer = col.querySelector('.fc-timegrid-col-events');
+        if (!colEventsContainer) return;
+        
+        const colRect = colEventsContainer.getBoundingClientRect();
+        const harnesses = Array.from(col.querySelectorAll('.fc-timegrid-event-harness:not(.fc-event-dragging)'));
+        
+        let colGroups = {};
+        harnesses.forEach(h => {
+            let sTime = null;
+            let innerDiv = h.querySelector('[data-slot]');
+            if (innerDiv) {
+                sTime = innerDiv.getAttribute('data-slot');
+            } else if (h.classList.contains('fc-event-mirror')) {
+                const mirrorRect = h.getBoundingClientRect();
+                const mirrorCenterY = mirrorRect.top + (mirrorRect.height / 2);
+                const targetTr = slotData.find(s => {
+                    const trRect = s.tr.getBoundingClientRect();
+                    return mirrorCenterY >= trRect.top && mirrorCenterY < trRect.bottom;
+                });
+                if (targetTr) sTime = targetTr.time;
+            }
+
+            if (!sTime) return;
+            if (!colGroups[sTime]) colGroups[sTime] = [];
+            colGroups[sTime].push({h: h, inner: innerDiv});
+        });
+
+        for (let sTime in colGroups) {
+            let sMap = slotData.find(s => s.time === sTime);
+            if (!sMap) continue;
+            
+            let group = colGroups[sTime];
+            group.sort((a,b) => {
+                if (a.h.classList.contains('fc-event-mirror')) return 1;
+                if (b.h.classList.contains('fc-event-mirror')) return -1;
+                return parseInt(a.inner?.getAttribute('data-offset') || 0) - parseInt(b.inner?.getAttribute('data-offset') || 0);
+            });
+            
+            let trRect = sMap.tr.getBoundingClientRect();
+            let currentY = trRect.top - colRect.top; 
+            
+            group.forEach(item => {
+                const h = item.h;
+                let origH = parseFloat(h.getAttribute('data-orig-height')) || 44;
+                let targetH = Math.max(origH, 48); 
+                
+                h.style.setProperty('position', 'absolute', 'important');
+                h.style.setProperty('inset', 'auto', 'important'); 
+                h.style.setProperty('bottom', 'auto', 'important'); 
+                h.style.setProperty('top', currentY + 'px', 'important');
+                h.style.setProperty('height', targetH + 'px', 'important');
+                h.style.setProperty('width', '96%', 'important');   
+                h.style.setProperty('left', '2%', 'important'); 
+                h.style.setProperty('right', 'auto', 'important');
+                h.style.setProperty('margin', '0', 'important'); 
+                h.style.setProperty('transform', 'none', 'important'); 
+                h.style.setProperty('z-index', h.classList.contains('fc-event-mirror') ? '100' : '10', 'important');
+                
+                if (item.inner) {
+                    item.inner.style.setProperty('margin', '0', 'important');
+                    item.inner.style.setProperty('width', '100%', 'important');
+                }
+                
+                currentY += targetH + 4; 
+            });
+        }
+    });
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function() {
+        clearTimeout(timeout);
+        timeout = setTimeout(func, wait);
+    };
+}
+
+// --- Countdown Logic ---
+function updateCountdowns() {
+    const now = new Date().getTime();
+    document.querySelectorAll('.upcoming-item-card').forEach(card => {
+        const timeAttr = card.getAttribute('data-time');
+        if (!timeAttr) return;
+        
+        // Boşluklu format (YYYY-MM-DD HH:MM:SS) için güvenli Date parse
+        const target = new Date(timeAttr.replace(/-/g, "/")).getTime();
+        if (isNaN(target)) return;
+
+        const diff = target - now;
+
+        if (diff <= 100) { // 100ms kala veya geçmişte
+            if (card.style.opacity !== '0') {
+                card.style.opacity = '0';
+                card.style.transform = 'translateX(20px)';
+                setTimeout(() => {
+                    card.remove();
+                    if (typeof calendar !== 'undefined') calendar.refetchEvents();
+                    if (typeof checkOverdue === 'function') checkOverdue();
+                }, 400);
+            }
+        } else {
+            const minutes = Math.floor(diff / 1000 / 60);
+            const seconds = Math.floor((diff / 1000) % 60);
+            const display = card.querySelector('.countdown-timer');
+            if (display) {
+                display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} kaldı`;
+            }
+        }
+    });
+}
 
 
 function submitForm(form, url, modalId, reloadOnSuccess = false) {
@@ -1205,19 +1354,32 @@ function submitForm(form, url, modalId, reloadOnSuccess = false) {
 
 function openAddModal(type = 'appointment') {
     if(type == 'appointment') {
+        $('#aptForm')[0].reset();
         selectedServices = []; // Reset
         $('#selected-services-tags').html('');
         $('#main-service-id').val('');
         $('#apt_base_price').val('0.00');
         $('#apt_discount_type').val('none');
         $('#apt_discount_value').val('0');
+        
+        // Premium select'lerin görünümünü sıfırlamak için change tetikle
+        $('#aptForm select').trigger('change');
+        
         calculateAppointmentPrice();
-        $('#aptForm')[0].reset();
         $('#aptModal').css('display', 'flex');
     }
-    else if(type == 'customer') $('#customerModal').css('display', 'flex');
-    else if(type == 'service') $('#serviceModal').css('display', 'flex');
-    else if(type == 'staff') $('#staffModal').css('display', 'flex');
+    else if(type == 'customer') {
+        $('#customerForm')[0].reset();
+        $('#customerModal').css('display', 'flex');
+    }
+    else if(type == 'service') {
+        $('#serviceForm')[0].reset();
+        $('#serviceModal').css('display', 'flex');
+    }
+    else if(type == 'staff') {
+        $('#staffForm')[0].reset();
+        $('#staffModal').css('display', 'flex');
+    }
 }
 
 function calculateAppointmentPrice(context = 'apt') {
@@ -1279,15 +1441,32 @@ function updateStatus(id, status) {
             </div>
         `;
         openGlobalModal('Onay Gerekli', body, footer);
+    } else if (status === 'cancelled') {
+        const body = `
+            <div class="confirm-wrapper">
+                <div class="confirm-icon" style="background: rgba(244, 63, 94, 0.1); color: #f43f5e;">
+                    <i class="fa-solid fa-ban"></i>
+                </div>
+                <h3 class="confirm-title">Randevuyu İptal Et</h3>
+                <p class="confirm-text">Bu randevuyu iptal etmek istediğinize emin misiniz?</p>
+            </div>
+        `;
+        const footer = `
+            <div class="confirm-footer-mobile">
+                <button onclick="executeStatusUpdate(${id}, 'cancelled')" class="btn-danger-premium" style="width: 100%;">Evet, İptal Et</button>
+                <button onclick="closeGlobalModal()" class="btn-secondary" style="width: 100%;"><?= __('cancel') ?></button>
+            </div>
+        `;
+        openGlobalModal('Onay Gerekli', body, footer);
     } else {
-        const title = status == 'cancelled' ? 'Randevuyu İptal Et' : 'Durumu Güncelle';
-        const text = status == 'cancelled' ? 'Bu randevuyu iptal etmek istediğinize emin misiniz?' : 'Randevu durumunu güncellemek istiyor musunuz?';
-        const btnText = status == 'cancelled' ? 'Evet, İptal Et' : 'Evet, Güncelle';
-        const icon = status == 'cancelled' ? 'fa-ban' : 'fa-clock';
+        const title = 'Durumu Güncelle';
+        const text = 'Randevu durumunu güncellemek istiyor musunuz?';
+        const btnText = 'Evet, Güncelle';
+        const icon = 'fa-clock';
 
         const body = `
             <div class="confirm-wrapper">
-                <div class="confirm-icon" style="${status == 'cancelled' ? 'background: rgba(244, 63, 94, 0.1); color: #f43f5e;' : 'background: rgba(134, 135, 195, 0.1); color: var(--primary);'}">
+                <div class="confirm-icon" style="background: rgba(134, 135, 195, 0.1); color: var(--primary);">
                     <i class="fa-solid ${icon}"></i>
                 </div>
                 <h3 class="confirm-title">${title}</h3>
@@ -1297,7 +1476,7 @@ function updateStatus(id, status) {
         
         const footer = `
             <div class="confirm-footer-mobile">
-                <button onclick="executeStatusUpdate(${id}, '${status}')" class="${status == 'cancelled' ? 'btn-danger-premium' : 'btn-premium'}">${btnText}</button>
+                <button onclick="executeStatusUpdate(${id}, '${status}')" class="btn-premium">${btnText}</button>
                 <button onclick="closeGlobalModal()" class="btn-secondary"><?= __('cancel') ?></button>
             </div>
         `;
@@ -1373,13 +1552,31 @@ function openPaymentModal(id) {
                                 <input type="hidden" id="status_final_price" value="${a.service_price}">
                             </div>
                         </div>
+                        <div style="margin-top: 20px;">
+                            <label style="font-size: 11px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px;">Ödeme Yöntemi Seçin</label>
+                            <div class="payment-methods-grid">
+                                <div class="pay-method-btn" onclick="selectPaymentMethod('cash', this)">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                    <span>Nakit</span>
+                                </div>
+                                <div class="pay-method-btn" onclick="selectPaymentMethod('transfer', this)">
+                                    <i class="fa-solid fa-building-columns"></i>
+                                    <span>EFT/Havale</span>
+                                </div>
+                                <div class="pay-method-btn" onclick="selectPaymentMethod('card', this)">
+                                    <i class="fa-solid fa-credit-card"></i>
+                                    <span>Kredi Kartı</span>
+                                </div>
+                            </div>
+                            <input type="hidden" id="selected_payment_method" value="">
+                        </div>
                     </div>
                 </div>
             `;
             
             const footer = `
                 <div class="confirm-footer-mobile" style="margin-top: 20px;">
-                    <button onclick="executeStatusUpdate(${id}, 'completed')" class="btn-premium">Tahsilatı Onayla ve Tamamla</button>
+                    <button id="complete-payment-btn" onclick="executeStatusUpdate(${id}, 'completed')" class="btn-premium" style="opacity: 0.5; cursor: not-allowed;" disabled>Tahsilatı Onayla ve Tamamla</button>
                     <button onclick="closeGlobalModal()" class="btn-secondary">Vazgeç</button>
                 </div>
             `;
@@ -1387,6 +1584,15 @@ function openPaymentModal(id) {
             openGlobalModal('Ödeme ve Onay', body, footer, 'modal-lg');
         }
     });
+}
+
+function selectPaymentMethod(method, el) {
+    $('.pay-method-btn').removeClass('active');
+    $(el).addClass('active');
+    $('#selected_payment_method').val(method);
+    
+    // Aktif et butonu
+    $('#complete-payment-btn').prop('disabled', false).css({'opacity': '1', 'cursor': 'pointer'});
 }
 
 
@@ -1398,6 +1604,7 @@ function executeStatusUpdate(id, status) {
         data.discount_type = $('#status_discount_type').val();
         data.discount_value = $('#status_discount_value').val();
         data.service_price = $('#status_final_price').val();
+        data.payment_method = $('#selected_payment_method').val();
     }
 
     $.post('../actions/appointment_status.php', data, function(res) {
@@ -1450,6 +1657,7 @@ function addServiceTag(select, context = 'apt') {
     let currentBase = parseFloat($(basePriceId).val()) || 0;
     $(basePriceId).val((currentBase + servicePrice).toFixed(2));
     calculateAppointmentPrice(context);
+    if (context === 'apt') checkServicePackageSession();
 
     select.value = "";
 }
@@ -1490,7 +1698,29 @@ function removeServiceTag(serviceId, context = 'apt') {
     let currentBase = parseFloat($(basePriceId).val()) || 0;
     $(basePriceId).val(Math.max(0, currentBase - sPrice).toFixed(2));
     calculateAppointmentPrice(context);
+    if (context === 'apt') checkServicePackageSession();
 }
+
+function checkServicePackageSession() {
+    const custId = $('#apt_customer_id').val();
+    const svcId = $('#main-service-id').val();
+    if (!custId || !svcId) {
+        $('#service-package-notice').hide();
+        return;
+    }
+    $.get('../actions/get_service_session_info.php', { customer_id: custId, service_id: svcId }, function(res) {
+        if (res.status === 'success' && res.data && res.data.is_package) {
+            $('#service-package-notice-text').text(res.data.message);
+            $('#service-package-notice').slideDown(200);
+        } else {
+            $('#service-package-notice').hide();
+        }
+    });
+}
+
+$(document).on('change', '#apt_customer_id', function() {
+    checkServicePackageSession();
+});
 
 let moveSelectedServices = [];
 
@@ -1501,10 +1731,24 @@ function refreshDashboardUI() {
         calendar.refetchEvents();
     }
     
-    // 2. Yan Paneli (Yaklaşanlar) Yenile
-    $.get('../actions/get_dashboard_sidebar.php', function(res) {
+    // 2. Üst Bar ve Modal İçeriğini Yenile (Hızlandırma Motoru)
+    $.get('../actions/get_upcoming_refresh.php', function(res) {
         if(res.status == 'success') {
-            $('#upcoming-widget-container').html(res.html);
+            // Header Badge Güncelle
+            const $badge = $('.count-badge');
+            if(res.count > 0) {
+                if($badge.length) {
+                    $badge.text(res.count).show();
+                } else {
+                    $('.quick-action-btn.upcoming').append(`<span class="count-badge">${res.count}</span>`);
+                }
+            } else {
+                $badge.remove();
+            }
+
+            // Modal Listesini Güncelle
+            $('#upcomingModal .modal-body').html(res.html);
+            
             // Geri sayım başlatıcıyı tekrar tetikle
             updateCountdowns();
         }
@@ -1530,10 +1774,12 @@ function changeView(viewName, e) {
         targetView = 'listMonth';
     }
 
-    // Navigasyon etiketi belirleme
+    // Navigasyon etiketi belirleme (datesSet zaten güncelliyor ama ilk geçiş için)
     if (viewName === 'timeGridDay') labelText = "GÜN";
     else if (viewName === 'timeGridWeek') labelText = "HAFTA";
-    else if (viewName === 'dayGridMonth') labelText = "AY";
+    else if (viewName === 'dayGridMonth' && typeof calendar !== 'undefined') {
+        labelText = calendar.view.title.split(' ')[0].toUpperCase();
+    }
     
     $('#calendar-nav-label').text(labelText);
     
@@ -1552,6 +1798,15 @@ function changeView(viewName, e) {
 }
 
 function handleEventDrop(info) {
+    // Tamamlanmış veya Gelmedi randevular asla taşınamaz
+    const status = info.event.extendedProps.status;
+    if (status === 'completed' || status === 'missed') {
+        info.revert();
+        const msg = status === 'completed' ? 'Tamamlanmış randevular taşınamaz.' : 'Gelinmeyen randevular taşınamaz.';
+        showToast('Bilgi', msg, 'info');
+        return;
+    }
+
     // Eğer konum/zaman hiç değişmediyse görseli sıfırla ve işlemi bitir (Donmayı engeller)
     if (info.oldEvent.start.getTime() === info.event.start.getTime() && 
         info.oldEvent.extendedProps.staff_id === info.event.extendedProps.staff_id) {
@@ -1652,8 +1907,8 @@ function openEditModal(id) {
             $('#move-staff').val(a.staff_id || '').trigger('change');
             $('#move-category-id').val(a.category_id || '');
             
-            // Ücretlendirme
-            $('#move_base_price').val(a.base_price || 0);
+            // Ücretlendirme (0'dan başlatıp hizmetleri üzerine ekleteceğiz)
+            $('#move_base_price').val(0);
             $('#move_discount_type').val(a.discount_type || 'none');
             $('#move_discount_value').val(a.discount_value || 0);
             $('#move_final_price').val(a.service_price || 0);
@@ -1714,15 +1969,278 @@ function deleteAppointment() {
         }
     });
 }
-    // Renk Butonları Seçim Mantığı (Quick-Add Modalları için)
-    $(document).on('click', '.category-dot', function() {
-        const name = $(this).attr('title');
-        const parent = $(this).closest('.form-group');
-        parent.find('.category-dot').css('border-color', 'transparent');
-        $(this).css('border-color', 'var(--primary)');
-        parent.find('.selected-color-name').text(name);
-        $('#quick_service_color').val($(this).data('color'));
+
+function downloadCalendarPDF() {
+    showToast('Hazırlanıyor', 'Görünüm bazlı profesyonel çizelge oluşturuluyor...', 'info');
+
+    const view = calendar.view;
+    const viewType = view.type; // dayGridMonth, timeGridWeek, timeGridDay
+    const events = calendar.getEvents();
+    const startHourStr = '<?= $cal_start ?>';
+    const endHourStr = '<?= $cal_end ?>';
+    const startHour = parseInt(startHourStr.split(':')[0]);
+    const endHour = parseInt(endHourStr.split(':')[0]);
+    
+    const isMonth = viewType.includes('Month');
+    const startStr = (isMonth ? view.currentStart : view.activeStart).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const endStr = new Date((isMonth ? view.currentEnd : view.activeEnd).getTime() - 86400000).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
+    let templateHtml = `
+        <div id="pdf-export-container" style="font-family: 'Outfit', sans-serif; padding: 40px; background: white; color: #1e1e2d; width: 1400px; margin: 0 auto;">
+            <!-- Header -->
+            <div class="pdf-header-section" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid #f4f4f7; padding-bottom: 30px; margin-bottom: 30px;">
+                <div>
+                    <h1 style="font-size: 36px; font-weight: 800; margin: 0; color: #2D2E42; letter-spacing: -1.5px; text-transform: uppercase;">
+                        ${viewType === 'dayGridMonth' ? 'Aylık Randevu Takvimi' : (viewType === 'timeGridDay' ? 'Günlük Randevu Çizelgesi' : 'Haftalık Randevu Çizelgesi')}
+                    </h1>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-top: 8px;">
+                        <span style="width: 30px; height: 30px; background: #A5A6D8; color: white; border-radius: 8px; display: flex; align-items: center; justify-content: center;"><i class="fa-solid fa-calendar-days"></i></span>
+                        <span style="font-size: 18px; color: #8687C3; font-weight: 700;">${startStr} ${viewType !== 'timeGridDay' ? ' — ' + endStr : ''}</span>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 28px; font-weight: 900; color: #2D2E42; letter-spacing: -1px;">Klinik<span style="color: #A5A6D8;">Mod</span></div>
+                    <div style="font-size: 11px; color: #b5b5c3; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Premium Klinik Yönetim Sistemi</div>
+                </div>
+            </div>
+    `;
+
+    if (viewType === 'dayGridMonth') {
+        // AYLIK GÖRÜNÜM TASARIMI
+        templateHtml += `
+            <div class="pdf-grid-header-section" style="display: flex; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px 12px 0 0; margin-bottom: -1px;">
+                ${['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'].map(day => `
+                    <div style="flex: 1; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; border-right: 1px solid #e2e8f0; text-align: center;">${day}</div>
+                `).join('')}
+            </div>
+        `;
+
+        const monthStart = view.activeStart;
+        const monthEndLimit = view.currentEnd; // Ayın bitişini (bir sonraki ayın 1'ini) sınır al
+        let currentDate = new Date(monthStart);
+        
+        while (currentDate < monthEndLimit) {
+            templateHtml += `<table class="pdf-row-table" style="width: 100%; border-collapse: collapse; margin-top: -1px; page-break-inside: avoid !important; break-inside: avoid !important; background: white; table-layout: fixed;"><tr>`;
+            
+            for (let d = 0; d < 7; d++) {
+                const dateStr = currentDate.getFullYear() + '-' + String(currentDate.getMonth() + 1).padStart(2, '0') + '-' + String(currentDate.getDate()).padStart(2, '0');
+                const isToday = currentDate.toDateString() === new Date().toDateString();
+                const isOtherMonth = currentDate.getMonth() !== view.currentStart.getMonth();
+                
+                const cellEvents = events.filter(e => {
+                    const eDate = new Date(e.start);
+                    const eDateStr = eDate.getFullYear() + '-' + String(eDate.getMonth() + 1).padStart(2, '0') + '-' + String(eDate.getDate()).padStart(2, '0');
+                    return eDateStr === dateStr;
+                });
+
+                templateHtml += `
+                    <td style="border: 1px solid #e2e8f0; padding: 10px; background: ${isOtherMonth ? '#f8fafc' : 'white'}; min-height: 150px; vertical-align: top; page-break-inside: avoid !important;">
+                        <div style="font-weight: 800; font-size: 14px; margin-bottom: 10px; color: ${isOtherMonth ? '#cbd5e1' : (isToday ? '#8687C3' : '#475569')};">
+                            ${currentDate.getDate()}
+                        </div>
+                        ${cellEvents.map(ev => {
+                            const props = ev.extendedProps || {};
+                            const status = props.status;
+                            const isCompleted = status === 'completed';
+                            const isMissed = status === 'missed';
+                            const startTime = new Date(ev.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                            
+                            let iconHtml = '';
+                            if (isCompleted) iconHtml = '✅ ';
+                            else if (isMissed) iconHtml = '❌ ';
+
+                            return `
+                                <div style="background: ${ev.backgroundColor || '#8687C3'}; color: white; padding: 6px 8px; border-radius: 6px; margin-bottom: 4px; font-size: 10px; font-weight: 700; ${isCompleted || isMissed ? 'opacity: 0.55;' : ''} white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <span style="font-size: 9px; opacity: 0.9;">${startTime}</span> ${iconHtml}${ev.title}
+                                </div>
+                            `;
+                        }).join('')}
+                    </td>
+                `;
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            templateHtml += `</tr></table>`;
+        }
+    } else if (viewType === 'timeGridDay') {
+        // GÜNLÜK GÖRÜNÜM TASARIMI
+        const activeDayDate = view.activeStart;
+        const activeDayStr = activeDayDate.getFullYear() + '-' + String(activeDayDate.getMonth() + 1).padStart(2, '0') + '-' + String(activeDayDate.getDate()).padStart(2, '0');
+
+        templateHtml += `
+            <div class="pdf-grid-header-section" style="display: flex; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px 12px 0 0; margin-bottom: -1px;">
+                <div style="width: 120px; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; border-right: 1px solid #e2e8f0; text-align: center;">Saat</div>
+                <div style="flex: 1; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; text-align: center;">${activeDayDate.toLocaleDateString('tr-TR', { weekday: 'long', day: '2-digit', month: 'long' })}</div>
+            </div>
+        `;
+
+        for (let h = startHour; h <= endHour; h++) {
+            for (let m of ['00', '30']) {
+                if (h === endHour && m === '30') continue;
+                const timeStr = String(h).padStart(2, '0') + ':' + m;
+                const cellEvents = events.filter(e => {
+                    const eStart = new Date(e.start);
+                    const eDateStr = eStart.getFullYear() + '-' + String(eStart.getMonth() + 1).padStart(2, '0') + '-' + String(eStart.getDate()).padStart(2, '0');
+                    return eDateStr === activeDayStr && eStart.getHours() === h && (m === '00' ? eStart.getMinutes() < 30 : eStart.getMinutes() >= 30);
+                });
+
+                templateHtml += `
+                    <table class="pdf-row-table" style="width: 100%; border-collapse: collapse; margin-top: -1px; page-break-inside: avoid !important; break-inside: avoid !important; background: white; table-layout: fixed;">
+                        <tr>
+                            <td style="width: 120px; border: 1px solid #e2e8f0; padding: 20px; text-align: center; font-weight: 800; color: ${m === '00' ? '#2D2E42' : '#94a3b8'}; font-size: 16px; background: #fcfdfe; border-right: 2px solid #e2e8f0;">${timeStr}</td>
+                            <td style="border: 1px solid #e2e8f0; padding: 15px; background: white; vertical-align: top;">
+                                ${cellEvents.map(ev => {
+                                    const props = ev.extendedProps || {};
+                                    const status = props.status;
+                                    const isCompleted = status === 'completed';
+                                    const isMissed = status === 'missed';
+                                    const startTime = new Date(ev.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                                    
+                                    let iconHtml = '';
+                                    if (isCompleted) iconHtml = '<i class="fa-solid fa-circle-check" style="font-size: 14px; margin-right: 8px;"></i>';
+                                    else if (isMissed) iconHtml = '<i class="fa-solid fa-circle-xmark" style="font-size: 14px; margin-right: 8px;"></i>';
+
+                                    return `
+                                        <div style="background: ${ev.backgroundColor || '#8687C3'}; color: white; padding: 15px 20px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; ${isCompleted || isMissed ? 'opacity: 0.55;' : ''}">
+                                            <div style="display: flex; align-items: center;">
+                                                ${iconHtml}
+                                                <div style="font-weight: 800; font-size: 15px;">${ev.title}</div>
+                                            </div>
+                                            <div style="font-size: 13px; font-weight: 600; opacity: 0.9;">
+                                                <i class="fa-regular fa-clock" style="margin-right: 5px;"></i> ${startTime}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </td>
+                        </tr>
+                    </table>
+                `;
+            }
+        }
+    } else {
+        // HAFTALIK GÖRÜNÜM
+        templateHtml += `
+            <div class="pdf-grid-header-section" style="display: flex; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px 12px 0 0; margin-bottom: -1px;">
+                <div style="width: 90px; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; border-right: 1px solid #e2e8f0; text-align: center;">Saat</div>
+                <div style="flex: 1; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; border-right: 1px solid #e2e8f0; text-align: center;">Pazartesi</div>
+                <div style="flex: 1; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; border-right: 1px solid #e2e8f0; text-align: center;">Salı</div>
+                <div style="flex: 1; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; border-right: 1px solid #e2e8f0; text-align: center;">Çarşamba</div>
+                <div style="flex: 1; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; border-right: 1px solid #e2e8f0; text-align: center;">Perşembe</div>
+                <div style="flex: 1; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; border-right: 1px solid #e2e8f0; text-align: center;">Cuma</div>
+                <div style="flex: 1; padding: 20px 10px; font-size: 13px; font-weight: 800; color: #475569; text-transform: uppercase; text-align: center;">Cumartesi</div>
+            </div>
+            ${(() => {
+                let rowsHtml = '';
+                for (let h = startHour; h <= endHour; h++) {
+                    for (let m of ['00', '30']) {
+                        if (h === endHour && m === '30') continue;
+                        const timeStr = String(h).padStart(2, '0') + ':' + m;
+                        rowsHtml += `
+                            <table class="pdf-row-table" style="width: 100%; border-collapse: collapse; margin-top: -1px; page-break-inside: avoid !important; break-inside: avoid !important; background: white; table-layout: fixed;">
+                                <tr>
+                                    <td style="width: 90px; border: 1px solid #e2e8f0; padding: 15px 10px; text-align: center; font-weight: 800; color: ${m === '00' ? '#2D2E42' : '#94a3b8'}; font-size: 14px; background: #fcfdfe; border-right: 2px solid #e2e8f0; vertical-align: middle;">${timeStr}</td>
+                                    ${[1, 2, 3, 4, 5, 6].map(d => {
+                                        const weekStart = new Date(view.activeStart);
+                                        const colDate = new Date(weekStart);
+                                        colDate.setDate(weekStart.getDate() + (d-1));
+                                        const colDateStr = colDate.getFullYear() + '-' + String(colDate.getMonth() + 1).padStart(2, '0') + '-' + String(colDate.getDate()).padStart(2, '0');
+
+                                        const cellEvents = events.filter(e => {
+                                            const eStart = new Date(e.start);
+                                            const eDateStr = eStart.getFullYear() + '-' + String(eStart.getMonth() + 1).padStart(2, '0') + '-' + String(eStart.getDate()).padStart(2, '0');
+                                            return eDateStr === colDateStr && eStart.getHours() === h && (m === '00' ? eStart.getMinutes() < 30 : eStart.getMinutes() >= 30);
+                                        });
+                                        return `
+                                            <td style="border: 1px solid #e2e8f0; padding: 10px; background: white; min-height: 90px; vertical-align: top; page-break-inside: avoid !important;">
+                                                ${cellEvents.map(ev => {
+                                                    const props = ev.extendedProps || {};
+                                                    const isCompleted = props.status === 'completed';
+                                                    const isMissed = props.status === 'missed';
+                                                    const startTime = new Date(ev.start).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                                                    
+                                                    let iconHtml = '';
+                                                    if (isCompleted) iconHtml = '<i class="fa-solid fa-circle-check" style="font-size: 10px; margin-right: 5px;"></i>';
+                                                    else if (isMissed) iconHtml = '<i class="fa-solid fa-circle-xmark" style="font-size: 10px; margin-right: 5px;"></i>';
+
+                                                    return `
+                                                        <div class="pdf-event-card" style="background: ${ev.backgroundColor || '#8687C3'}; color: white; padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.04); border-left: 3px solid rgba(0,0,0,0.15); ${isCompleted || isMissed ? 'opacity: 0.55;' : ''} page-break-inside: avoid !important;">
+                                                            <div style="font-size: 11px; font-weight: 800; line-height: 1.2; margin-bottom: 2px;">
+                                                                ${iconHtml} ${ev.title}
+                                                            </div>
+                                                            <div style="font-size: 9px; font-weight: 600; opacity: 0.9;">
+                                                                <i class="fa-regular fa-clock" style="font-size: 8px;"></i> ${startTime}
+                                                            </div>
+                                                        </div>
+                                                    `;
+                                                }).join('')}
+                                            </td>
+                                        `;
+                                    }).join('')}
+                                </tr>
+                            </table>
+                        `;
+                    }
+                }
+                return rowsHtml;
+            })()}
+        `;
+    }
+
+    templateHtml += `
+            <div style="margin-top: 30px; text-align: right; font-size: 11px; color: #b5b5c3; font-weight: 500;">
+                Bu rapor KlinikMod sistemi tarafından ${new Date().toLocaleString('tr-TR')} tarihinde oluşturulmuştur.
+            </div>
+        </div>
+    `;
+
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'fixed';
+    tempContainer.style.left = '-9999px';
+    tempContainer.style.top = '0';
+    tempContainer.innerHTML = templateHtml;
+    document.body.appendChild(tempContainer);
+
+    const opt = {
+        margin: [10, 5, 10, 5],
+        filename: `randevu_cizelgesi_${startStr.replace(/\//g, '-')}.pdf`,
+        image: { type: 'jpeg', quality: 1.0 },
+        html2canvas: { scale: 2, useCORS: true, letterRendering: true, width: 1400, windowWidth: 1400, logging: false },
+        jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape', compress: true },
+        pagebreak: { mode: ['css', 'legacy'], avoid: ['.pdf-row-table'] }
+    };
+
+    const container = tempContainer.querySelector('#pdf-export-container');
+    const rows = container.querySelectorAll('.pdf-row-table');
+    const headerTemplate = container.querySelector('.pdf-header-section').outerHTML;
+    const gridHeaderTemplate = container.querySelector('.pdf-grid-header-section').outerHTML;
+    
+    const pageHeightLimit = 900; 
+    let currentTotalHeight = 250;
+
+    rows.forEach((row) => {
+        const rowHeight = row.offsetHeight;
+        if (currentTotalHeight + rowHeight > pageHeightLimit) {
+            const breakContainer = document.createElement('div');
+            breakContainer.style.pageBreakBefore = 'always';
+            breakContainer.style.marginTop = '20px';
+            breakContainer.innerHTML = headerTemplate + gridHeaderTemplate;
+            row.parentNode.insertBefore(breakContainer, row);
+            currentTotalHeight = 250 + rowHeight;
+        } else {
+            currentTotalHeight += rowHeight;
+        }
     });
+
+    html2pdf().set(opt).from(container).save().then(() => {
+        document.body.removeChild(tempContainer);
+        showToast('Başarılı', 'Görünüm bazlı PDF başarıyla oluşturuldu.', 'success');
+    }).catch(err => {
+        console.error('PDF Hatası:', err);
+        showToast('Hata', 'PDF oluşturulurken bir hata oluştu.', 'error');
+        document.body.removeChild(tempContainer);
+    });
+}
+
 </script>
 
 <?php include '../includes/footer.php'; ?>

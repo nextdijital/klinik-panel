@@ -15,61 +15,64 @@ redirect_if_logged_in();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= __('login_title') ?> - KlinikMod</title>
+    <meta name="description" content="KlinikMod - Profesyonel Randevu ve Danışan Yönetim Paneli">
     <link rel="icon" type="image/png" href="assets/img/favicon.png">
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="assets/css/style.css?v=1.6">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="login-body">
-    <div class="login-wrapper">
+    <main class="login-wrapper">
         <!-- Sol Panel: Giriş Formu -->
         <div class="login-side-form">
             <div class="login-card">
                 <div class="logo">
                     <div class="logo-icon">
-                        <i class="fa-solid fa-om"></i>
+                        <i class="fa-solid fa-om" aria-hidden="true"></i>
                     </div>
                     <span>KlinikMod</span>
                 </div>
                 
-                <h2><?= __('welcome') ?></h2>
+                <h1><?= __('welcome') ?></h1>
                 <p class="login-subtitle"><span><?= __('login_subtitle') ?? 'Lütfen hesabınıza giriş yapın.' ?></span></p>
 
                 <!-- Dinamik Hata Alanı -->
                 <div id="login-alert" class="login-error" style="display: none;">
-                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
                     <span class="error-text"></span>
                 </div>
 
                 <form id="login-form">
                     <div class="form-group">
-                        <label class="form-label"><?= __('username') ?></label>
+                        <label class="form-label" for="login-username"><?= __('username') ?></label>
                         <div class="input-wrapper">
-                            <input type="text" name="username" class="form-control" required placeholder="Kullanıcı Adı">
-                            <i class="fa-solid fa-user input-icon"></i>
+                            <input type="text" name="username" id="login-username" class="form-control" required placeholder="Kullanıcı Adı" autocomplete="username">
+                            <i class="fa-solid fa-user input-icon" aria-hidden="true"></i>
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label"><?= __('password') ?></label>
+                        <label class="form-label" for="login-pass"><?= __('password') ?></label>
                         <div class="input-wrapper">
-                            <input type="password" name="password" id="login-pass" class="form-control" required placeholder="••••••••">
-                            <i class="fa-solid fa-lock input-icon"></i>
-                            <i class="fa-solid fa-eye-slash toggle-password" data-target="login-pass"></i>
+                            <input type="password" name="password" id="login-pass" class="form-control" required placeholder="••••••••" autocomplete="current-password">
+                            <i class="fa-solid fa-lock input-icon" aria-hidden="true"></i>
+                            <i class="fa-solid fa-eye-slash toggle-password" data-target="login-pass" role="button" aria-label="Şifreyi Göster veya Gizle" tabindex="0"></i>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Giriş Anahtarı</label>
+                        <label class="form-label" for="login-sec">Giriş Anahtarı</label>
                         <div class="input-wrapper">
-                            <input type="password" name="security_code" id="login-sec" class="form-control" required placeholder="Güvenlik Kodu">
-                            <i class="fa-solid fa-shield-halved input-icon"></i>
+                            <input type="password" name="security_code" id="login-sec" class="form-control" required placeholder="Güvenlik Kodu" autocomplete="off">
+                            <i class="fa-solid fa-shield-halved input-icon" aria-hidden="true"></i>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-primary" id="login-btn">
+                    <button type="submit" class="btn-primary" id="login-btn" aria-label="<?= __('login_btn') ?>">
                         <span><?= __('login_btn') ?></span>
-                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                        <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
                     </button>
                 </form>
 
@@ -118,16 +121,18 @@ redirect_if_logged_in();
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- Arka Plan Parçacıkları -->
-    <div class="bg-particles">
+    <div class="bg-particles" aria-hidden="true">
         <div class="particle p1"></div>
         <div class="particle p2"></div>
         <div class="particle p3"></div>
         <div class="particle p4"></div>
     </div>
 
+    <!-- Scriptler (Oluşturma engellemesini önlemek için sayfa sonuna taşındı) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         $(document).ready(function() {
             // Password Show/Hide Toggle (Reversed per user request)

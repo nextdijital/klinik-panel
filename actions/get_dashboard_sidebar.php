@@ -37,7 +37,7 @@ ob_start();
     <?php else: ?>
         <div id="upcoming-list" style="display: flex; flex-direction: column; gap: 12px;">
             <?php foreach($upcoming_appts as $appt): ?>
-                <div class="upcoming-item-card" id="upcoming-<?= $appt['id'] ?>" data-time="<?= date('Y-m-d') ?>T<?= $appt['appointment_time'] ?>" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(134, 135, 195, 0.03); border-radius: 12px; border: 1px solid rgba(134, 135, 195, 0.05); transition: all 0.3s ease;">
+                <div class="upcoming-item-card" id="upcoming-<?= $appt['id'] ?>" data-time="<?= date('Y-m-d') ?> <?= $appt['appointment_time'] ?>" style="display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(134, 135, 195, 0.03); border-radius: 12px; border: 1px solid rgba(134, 135, 195, 0.05); transition: all 0.3s ease;">
                     <div style="width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; flex-shrink: 0;">
                         <?= date('H:i', strtotime($appt['appointment_time'])) ?>
                     </div>

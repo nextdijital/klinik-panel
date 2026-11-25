@@ -1,8 +1,8 @@
 <?php include '../includes/header.php'; ?>
 
 <div class="large-calendar-container">
-    <div id="customer-list-view">
-        <div class="page-header-mobile" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div id="customer-list-view" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+        <div class="page-header-mobile" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-shrink: 0;">
             <h2 class="desktop-only" style="font-size: 24px; font-weight: 700; color: var(--text-main);"><?= __('customers') ?></h2>
             <div class="mobile-only-title" style="display: none; width: 100%; text-align: center; margin-bottom: 20px;">
                  <h2 style="font-size: 24px; font-weight: 800; color: var(--text-main);">Müşteri Yönetimi</h2>
@@ -15,8 +15,16 @@
                 </button>
             </div>
         </div>
+        
+        <div class="customer-search-wrapper" style="margin-bottom: 20px; flex-shrink: 0;">
+            <div style="position: relative; display: flex; align-items: center;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 18px; color: var(--primary); opacity: 0.6; font-size: 14px;"></i>
+                <input type="text" id="main-customer-search" placeholder="Müşteri adı, soyadı veya telefon ile hızlıca ara..." 
+                       style="width: 100%; padding: 14px 20px 14px 50px; border-radius: 16px; border: 1px solid rgba(134, 135, 195, 0.15); background: #FFFFFF; font-family: 'Outfit', sans-serif; font-size: 14px; color: var(--text-main); outline: none; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+            </div>
+        </div>
 
-    <div style="overflow-x: auto;" class="premium-table-scroll">
+    <div style="overflow-x: auto; overflow-y: auto; flex: 1; min-height: 0;" class="premium-table-scroll custom-scroll">
         <table class="premium-customer-table" style="width: 100%; border-collapse: collapse; text-align: left;">
             <thead>
                 <tr style="color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(165,166,216,0.1);">
@@ -28,7 +36,72 @@
             </thead>
             <tbody>
                 <?php
-                $stmt = $db->query("SELECT * FROM customers WHERE is_deleted = 0 ORDER BY created_at DESC");
+                $services_list = $db->query("SELECT id, name, price, color FROM services WHERE is_deleted = 0 ORDER BY name ASC")->fetchAll();
+
+                // Müşterilerin hizmet bazlı paket takiplerini çekelim (total_sessions > 1)
+                $service_packages_by_customer = [];
+                $sp_stmt = $db->query("
+                    SELECT a.customer_id, s.id as service_id, s.name as service_name, s.total_sessions,
+                           COUNT(a.id) as completed_count
+                    FROM appointments a
+                    JOIN services s ON a.service_id = s.id
+                    WHERE a.is_deleted = 0 AND a.status = 'completed' AND s.total_sessions > 1
+                    GROUP BY a.customer_id, s.id
+                ");
+                while ($sp_row = $sp_stmt->fetch()) {
+                    $cid = (int)$sp_row['customer_id'];
+                    $tot = (int)$sp_row['total_sessions'];
+                    $comp = (int)$sp_row['completed_count'];
+                    if ($tot > 0) {
+                        if ($comp === 0) {
+                            $used = 0;
+                            $rem = $tot;
+                            $cyc = 1;
+                            $is_done = false;
+                        } else {
+                            $mod = $comp % $tot;
+                            if ($mod === 0) {
+                                $used = $tot;
+                                $rem = 0;
+                                $cyc = floor($comp / $tot);
+                                $is_done = true;
+                            } else {
+                                $used = $mod;
+                                $rem = $tot - $mod;
+                                $cyc = floor($comp / $tot) + 1;
+                                $is_done = false;
+                            }
+                        }
+                    } else {
+                        $used = 0; $rem = 0; $cyc = 1; $is_done = false;
+                    }
+                    $service_packages_by_customer[$cid][] = [
+                        'name' => $sp_row['service_name'],
+                        'total' => $tot,
+                        'completed' => $comp,
+                        'used' => $used,
+                        'remaining' => $rem,
+                        'cycle' => $cyc,
+                        'is_done' => $is_done
+                    ];
+                }
+
+                $stmt = $db->query("
+                    SELECT c.*, 
+                           cp.package_name, 
+                           cp.total_sessions, 
+                           cp.used_sessions, 
+                           (cp.total_sessions - cp.used_sessions) as remaining_sessions
+                    FROM customers c
+                    LEFT JOIN (
+                        SELECT customer_id, package_name, total_sessions, used_sessions,
+                               ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY id DESC) as rn
+                        FROM customer_packages 
+                        WHERE status = 'active' AND (total_sessions - used_sessions) > 0
+                    ) cp ON c.id = cp.customer_id AND cp.rn = 1
+                    WHERE c.is_deleted = 0 
+                    ORDER BY c.created_at DESC
+                ");
                 $customers = $stmt->fetchAll();
 
                 $card_colors = [
@@ -55,13 +128,32 @@
                         }
                     ?>
                     <tr class="appointment-row" onclick="if(window.innerWidth < 1024) viewCustomer(<?= $c_id ?>)" style="border-bottom: 1px solid rgba(165, 166, 216, 0.05); transition: all 0.2s;">
-                        <td style="padding: 18px 10px;">
-                            <div class="patient-block-card" onclick="if(window.innerWidth >= 1024) viewCustomerHistory(<?= $c_id ?>)" style="background: <?= $bg_color ?>; cursor: pointer;">
-                                <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
-                                    <span class="patient-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; font-weight: 700;"><?= clean($row['first_name'] . ' ' . $row['last_name']) ?></span>
+                        <td style="padding: 18px 10px; min-width: 290px;">
+                            <div class="patient-block-card" onclick="if(window.innerWidth >= 1024) viewCustomerHistory(<?= $c_id ?>)" style="background: <?= $bg_color ?>; cursor: pointer; min-width: 290px; max-width: 390px; padding: 14px 20px; padding-right: 58px; border-radius: 16px;">
+                                <div style="display: flex; flex-direction: column; gap: 5px; overflow: hidden;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <span class="patient-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; font-weight: 800;"><?= clean($row['first_name'] . ' ' . $row['last_name']) ?></span>
+                                    </div>
+                                    <?php 
+                                    $has_sp = !empty($service_packages_by_customer[$c_id]);
+                                    if ($has_sp):
+                                        foreach($service_packages_by_customer[$c_id] as $spk):
+                                    ?>
+                                        <div style="display: inline-flex; align-items: center; gap: 5px; background: rgba(39, 174, 96, 0.12); color: #219653; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; width: fit-content; white-space: nowrap;">
+                                            <i class="fa-solid fa-box-open" style="font-size: 10px;"></i>
+                                            <span><?= clean($spk['name']) ?>: <?= $spk['used'] ?>/<?= $spk['total'] ?> (<?= $spk['remaining'] > 0 ? $spk['remaining'] . ' Seans Kaldı' : 'Tamamlandı' ?>)</span>
+                                        </div>
+                                    <?php 
+                                        endforeach;
+                                    elseif(!empty($row['package_name']) && $row['remaining_sessions'] > 0): ?>
+                                        <div style="display: inline-flex; align-items: center; gap: 5px; background: rgba(39, 174, 96, 0.12); color: #219653; border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; width: fit-content; white-space: nowrap;">
+                                            <i class="fa-solid fa-box-open" style="font-size: 10px;"></i>
+                                            <span><?= clean($row['package_name']) ?>: <?= $row['remaining_sessions'] ?> Seans Kaldı</span>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
-                                <a href="tel:<?= $row['phone'] ?>" class="cta-call-icon" data-tooltip="Arama Yap" onclick="event.stopPropagation()" style="width: 30px; height: 30px; right: 8px;">
-                                    <i class="fa-solid fa-phone" style="font-size: 11px;"></i>
+                                <a href="tel:<?= $row['phone'] ?>" class="cta-call-icon" data-tooltip="Arama Yap" onclick="event.stopPropagation()" style="width: 34px; height: 34px; right: 12px;">
+                                    <i class="fa-solid fa-phone" style="font-size: 12px;"></i>
                                 </a>
                             </div>
                         </td>
@@ -79,6 +171,9 @@
                         </td>
                         <td class="desktop-only" style="padding: 18px 10px; text-align: right;">
                             <div class="action-wrapper-premium">
+                                <div class="action-btn-pc bg-orange-soft" data-tooltip="Paket Tanımla" onclick="event.stopPropagation(); openAddPackageModal(<?= $c_id ?>, '<?= clean($row['first_name'] . ' ' . $row['last_name']) ?>')">
+                                    <i class="fa-solid fa-box-open"></i>
+                                </div>
                                 <div class="action-btn-pc bg-blue-soft" data-tooltip="<?= __('details') ?>" onclick="event.stopPropagation(); viewCustomer(<?= $c_id ?>)">
                                     <i class="fa-solid fa-eye"></i>
                                 </div>
@@ -137,15 +232,12 @@
 .floating-back-btn span { font-weight: 700; font-size: 14px; }
 
 /* Tarih Aralığı Filtresi İçin Özel Stil */
-#history-date-filter {
-    background: white;
-    border: 1px solid rgba(134, 135, 195, 0.1);
-    border-radius: 12px;
-    padding: 10px 15px;
-    font-size: 13px;
-    color: var(--text-main);
-    width: 200px;
-    transition: all 0.3s ease;
+#history-date-filter, .premium-select-native {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    position: absolute !important;
+    pointer-events: none !important;
 }
 
 /* Müşteri Tablo Düzeni - Mobil ve PC Ayrımı */
@@ -153,10 +245,22 @@
     .premium-customer-table {
         table-layout: fixed;
     }
-    .col-customer { width: 28%; }
-    .col-date { width: 24%; }
-    .col-phone { width: 24%; }
-    .col-action { width: 24%; }
+    .col-customer { width: 34%; }
+    .col-date { width: 22%; }
+    .col-phone { width: 22%; }
+    .col-action { width: 22%; }
+
+    .premium-customer-table .patient-block-card {
+        min-width: 290px !important;
+        max-width: 400px !important;
+        padding: 14px 20px !important;
+        padding-right: 58px !important;
+        border-radius: 16px !important;
+    }
+    .premium-customer-table .patient-name {
+        font-size: 15px !important;
+        font-weight: 800 !important;
+    }
 }
 
 @media (max-width: 1023px) {
@@ -297,6 +401,259 @@
 </style>
 
 <script>
+const availableServices = <?= json_encode($services_list) ?>;
+
+function autoFillPackageName(selectEl) {
+    const sId = selectEl.value;
+    const currentName = $('#pkg_name').val().trim();
+    if (sId) {
+        const s = availableServices.find(item => item.id == sId);
+        if (s) {
+            const sessions = $('#pkg_total_sessions').val() || 10;
+            if (!currentName || currentName.indexOf('Seans') > -1) {
+                $('#pkg_name').val(`${sessions} Seans ${s.name}`);
+            }
+            if ($('#pkg_price').val() == '0.00' || $('#pkg_price').val() == '0' || !$('#pkg_price').val()) {
+                $('#pkg_price').val((parseFloat(s.price) * parseInt(sessions)).toFixed(2));
+            }
+        }
+    }
+}
+
+function openAddPackageModal(customerId, customerName) {
+    let serviceOptions = '<option value="">Genel / Hizmet Seçilmedi</option>';
+    if (availableServices && availableServices.length > 0) {
+        availableServices.forEach(s => {
+            serviceOptions += `<option value="${s.id}">${s.name} (${parseFloat(s.price).toLocaleString('tr-TR')} ₺)</option>`;
+        });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const body = `
+        <form id="addPackageForm">
+            <input type="hidden" name="customer_id" value="${customerId}">
+            <div style="background: rgba(165, 166, 216, 0.08); border-radius: 12px; padding: 12px 15px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-user-check" style="color: var(--primary); font-size: 16px;"></i>
+                <div>
+                    <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Müşteri</div>
+                    <div style="font-weight: 700; color: var(--text-main); font-size: 14px;">${customerName}</div>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label class="form-label" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Paket Adı <span style="color: #e74c3c;">*</span></label>
+                <input type="text" name="package_name" id="pkg_name" class="form-control" placeholder="Örn: 10 Seans Klinik Pilates" required>
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">İlgili Hizmet</label>
+                    <select name="service_id" id="pkg_service_id" class="form-control" onchange="autoFillPackageName(this)">
+                        ${serviceOptions}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Toplam Seans <span style="color: #e74c3c;">*</span></label>
+                    <input type="number" name="total_sessions" id="pkg_total_sessions" class="form-control" value="10" min="1" required oninput="const sel = document.getElementById('pkg_service_id'); if(sel && sel.value) autoFillPackageName(sel);">
+                </div>
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Paket Ücreti (₺)</label>
+                    <input type="number" step="0.01" name="price" id="pkg_price" class="form-control" placeholder="0.00" value="0.00">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Ödeme Durumu</label>
+                    <select name="payment_status" class="form-control">
+                        <option value="paid">Tahsil Edildi (Ödendi)</option>
+                        <option value="partial">Kısmi Ödeme</option>
+                        <option value="unpaid">Ödenmedi / Bekliyor</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Başlangıç Tarihi</label>
+                    <input type="date" name="start_date" class="form-control" value="${today}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Bitiş Tarihi (Opsiyonel)</label>
+                    <input type="date" name="end_date" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-main);">
+                    <input type="checkbox" name="add_to_finance" value="1" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+                    <span>Paket ücretini Finans Gelirlerine işle</span>
+                </label>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 5px;">
+                <label class="form-label" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">Notlar</label>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Paket hakkında özel notlar..."></textarea>
+            </div>
+        </form>
+    `;
+
+    const footer = `
+        <button type="button" onclick="saveCustomerPackage()" class="btn-premium" style="width: 100%;">
+            <i class="fa-solid fa-check"></i> Paketi Kaydet
+        </button>
+    `;
+
+    openGlobalModal('Paket Tanımla', body, footer);
+}
+
+function saveCustomerPackage() {
+    const form = $('#addPackageForm');
+    const data = form.serialize();
+    const customerId = form.find('input[name="customer_id"]').val();
+    
+    $.post('../actions/package_add.php', data, function(res) {
+        if(res.status === 'success') {
+            showToast('Başarılı', res.message, 'success');
+            closeGlobalModal();
+            if ($('#customer-history-view').is(':visible')) {
+                viewCustomerHistory(customerId);
+            } else {
+                location.reload();
+            }
+        } else {
+            showToast('Hata', res.message, 'error');
+        }
+    });
+}
+
+function adjustPackageSession(packageId, delta, customerId) {
+    $.post('../actions/package_update.php', { action: 'adjust_session', package_id: packageId, delta: delta }, function(res) {
+        if(res.status === 'success') {
+            showToast('Başarılı', res.message, 'success');
+            viewCustomerHistory(customerId);
+        } else {
+            showToast('Hata', res.message, 'error');
+        }
+    });
+}
+
+function buildPackagesHtml(packages, customerId, customerName, servicePackages) {
+    let hasContent = (servicePackages && servicePackages.length > 0) || (packages && packages.length > 0);
+    let html = `
+        <div style="background: white; border: 1px solid rgba(134, 135, 195, 0.1); border-radius: 20px; padding: 20px; margin-bottom: 25px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 38px; height: 38px; border-radius: 12px; background: rgba(39, 174, 96, 0.12); color: #27ae60; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                        <i class="fa-solid fa-box-open"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0;">Hizmet Paketleri & Seans Takibi</h3>
+                        <p style="margin: 0; font-size: 12px; color: var(--text-muted);">Müşterinin seans ilerlemeleri ve kalan seans hakları</p>
+                    </div>
+                </div>
+                <button type="button" onclick="openAddPackageModal(${customerId}, '${customerName}')" class="btn-premium" style="padding: 9px 16px; font-size: 12px; background: #27ae60; border: none; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);">
+                    <i class="fa-solid fa-plus"></i> Özel Paket Tanımla
+                </button>
+            </div>
+    `;
+
+    if (!hasContent) {
+        html += `
+            <div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 13px; background: rgba(134, 135, 195, 0.03); border-radius: 14px; border: 1px dashed rgba(134, 135, 195, 0.2);">
+                Bu müşteriye ait tamamlanmış bir paketli hizmet veya tanımlı seans paketi bulunmuyor.
+            </div>
+        `;
+    } else {
+        html += `<div style="display: flex; flex-direction: column; gap: 12px;">`;
+
+        // 1. Hizmet Bazlı Paketler
+        if (servicePackages && servicePackages.length > 0) {
+            servicePackages.forEach(sp => {
+                const pct = Math.min(100, Math.round((sp.used_in_cycle / sp.total_sessions) * 100));
+                const isCompleted = sp.is_cycle_completed;
+                const badgeBg = isCompleted ? 'rgba(149, 165, 166, 0.15)' : 'rgba(39, 174, 96, 0.15)';
+                const badgeColor = isCompleted ? '#7f8c8d' : '#219653';
+                const badgeText = isCompleted ? `${sp.cycle}. Paket Tamamlandı (${sp.total_sessions}/${sp.total_sessions})` : `${sp.remaining_sessions} Seans Kaldı`;
+
+                html += `
+                    <div style="background: rgba(134, 135, 195, 0.03); border: 1px solid rgba(134, 135, 195, 0.12); border-radius: 14px; padding: 16px 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                            <div>
+                                <div style="font-weight: 800; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                    <span style="color: ${sp.service_color || 'var(--primary)'};"><i class="fa-solid fa-award"></i></span>
+                                    <span>${sp.service_name}</span>
+                                    <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px;">${badgeText}</span>
+                                    ${sp.completed_cycles > 0 ? `<span style="background: rgba(52, 152, 219, 0.12); color: #2980b9; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 12px;">${sp.completed_cycles} Paket Bitirildi</span>` : ''}
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">
+                                    ${sp.total_sessions} Seanslık Paket Programı • Toplam Gerçekleşen: <strong>${sp.total_completed} Seans</strong>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span style="font-size: 13px; font-weight: 800; color: #219653;">${sp.used_in_cycle} / ${sp.total_sessions} Seans</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                                <span>Mevcut Paket Seans Durumu</span>
+                                <span>%${pct}</span>
+                            </div>
+                            <div style="background: rgba(134, 135, 195, 0.12); border-radius: 6px; height: 8px; overflow: hidden;">
+                                <div style="background: linear-gradient(90deg, #27ae60, #2ecc71); width: ${pct}%; height: 100%; border-radius: 6px; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 2. Özel Tanımlı Paketler
+        if (packages && packages.length > 0) {
+            packages.forEach(pkg => {
+                const pct = Math.min(100, Math.round((pkg.used_sessions / pkg.total_sessions) * 100));
+                const isCompleted = pkg.remaining_sessions <= 0 || pkg.status === 'completed';
+                const badgeBg = isCompleted ? 'rgba(149, 165, 166, 0.15)' : 'rgba(39, 174, 96, 0.15)';
+                const badgeColor = isCompleted ? '#7f8c8d' : '#219653';
+                const badgeText = isCompleted ? 'Tamamlandı' : `${pkg.remaining_sessions} Seans Kaldı`;
+
+                html += `
+                    <div style="background: rgba(134, 135, 195, 0.02); border: 1px solid rgba(134, 135, 195, 0.08); border-radius: 14px; padding: 14px 18px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                            <div>
+                                <div style="font-weight: 800; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                    <span>${pkg.package_name}</span>
+                                    <span style="background: ${badgeBg}; color: ${badgeColor}; font-size: 11px; font-weight: 800; padding: 3px 10px; border-radius: 20px;">${badgeText}</span>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                                    ${pkg.service_name ? pkg.service_name + ' • ' : ''}Toplam: ${pkg.total_sessions} Seans | Fiyat: ${parseFloat(pkg.price).toLocaleString('tr-TR')} ₺
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); margin-right: 4px;">Seans Düzelt:</span>
+                                <button type="button" onclick="adjustPackageSession(${pkg.id}, 1, ${customerId})" class="action-btn-pc" style="width: 28px; height: 28px; background: rgba(231, 76, 60, 0.1); color: #e74c3c; border-radius: 8px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border: none;" title="1 Seans Kullanıldı İşaretle">-1</button>
+                                <button type="button" onclick="adjustPackageSession(${pkg.id}, -1, ${customerId})" class="action-btn-pc" style="width: 28px; height: 28px; background: rgba(46, 204, 113, 0.1); color: #27ae60; border-radius: 8px; font-weight: 700; font-size: 11px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; border: none;" title="1 Seans İade Et">+1</button>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">
+                                <span>Kullanılan: ${pkg.used_sessions} / ${pkg.total_sessions}</span>
+                                <span>%${pct}</span>
+                            </div>
+                            <div style="background: rgba(134, 135, 195, 0.1); border-radius: 6px; height: 7px; overflow: hidden;">
+                                <div style="background: linear-gradient(90deg, #27ae60, #2ecc71); width: ${pct}%; height: 100%; border-radius: 6px; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        html += `</div>`;
+    }
+    html += `</div>`;
+    return html;
+}
 function addCustomerModal() {
     const body = `
         <form id="customerForm">
@@ -414,6 +771,9 @@ function viewCustomer(id) {
                     </div>
                     
                     <div class="modal-apt-actions" style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
+                        <button onclick="openAddPackageModal(${c.id}, '${c.first_name} ${c.last_name}')" class="btn-premium" style="width: 100%; padding: 14px; font-size: 13px; background: #27ae60; border: none; box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);">
+                            <i class="fa-solid fa-box-open"></i> YENİ PAKET TANIMLA
+                        </button>
                         <button onclick="viewCustomerHistory(${c.id})" class="btn-premium" style="width: 100%; padding: 14px; font-size: 13px; background: var(--primary); border: none; box-shadow: 0 4px 12px rgba(134, 135, 195, 0.2);">
                             <i class="fa-solid fa-clock-rotate-left"></i> MÜŞTERİ GEÇMİŞİ
                         </button>
@@ -509,6 +869,8 @@ function viewCustomerHistory(id) {
                                 </div>
                             </div>
                         </div>
+
+                        ${buildPackagesHtml(data.packages, c.id, c.first_name + ' ' + c.last_name, data.service_packages)}
 
                         <!-- Filtreleme Paneli -->
                         <div class="history-filter-panel">
@@ -620,6 +982,8 @@ function viewCustomerHistory(id) {
                                 </div>
                             </div>
                         </div>
+
+                        ${buildPackagesHtml(data.packages, c.id, c.first_name + ' ' + c.last_name, data.service_packages)}
 
                         <h4 style="font-size: 14px; font-weight: 800; color: var(--text-main); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
                             <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i> <?= __('past_appointments') ?>
@@ -786,6 +1150,26 @@ const mobileStyles = `
 }
 `;
 $('<style>').text(mobileStyles).appendTo('head');
+
+// Ana Müşteri Listesi Arama Mantığı
+$('#main-customer-search').on('input', function() {
+    const value = $(this).val().toLocaleLowerCase('tr-TR').trim();
+    $('.premium-customer-table tbody tr:not(#no-customers-found)').each(function() {
+        const text = $(this).text().toLocaleLowerCase('tr-TR');
+        if (text.indexOf(value) > -1) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+    
+    // Eğer hiçbir sonuç yoksa mesaj göster/gizle
+    const visibleRows = $('.premium-customer-table tbody tr:visible:not(#no-customers-found)').length;
+    $('#no-customers-found').remove();
+    if (visibleRows === 0 && $('.premium-customer-table tbody tr').length > 0) {
+        $('.premium-customer-table tbody').append('<tr id="no-customers-found"><td colspan="4" style="padding: 40px; text-align: center; color: var(--text-muted);">Aranan kriterlere uygun müşteri bulunamadı.</td></tr>');
+    }
+});
 </script>
 
 <?php include '../includes/footer.php'; ?>

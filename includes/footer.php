@@ -125,6 +125,42 @@
                 margin-bottom: 20px !important;
             }
         }
+
+        /* Ödeme Yöntemi Butonları - Global */
+        .payment-methods-grid-global {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .pay-method-btn-global {
+            background: white;
+            border: 1px solid rgba(134, 135, 195, 0.15);
+            padding: 12px 5px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--text-muted);
+        }
+        .pay-method-btn-global i { font-size: 18px; }
+        .pay-method-btn-global span { font-size: 12px; font-weight: 700; }
+
+        .pay-method-btn-global:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(134, 135, 195, 0.05);
+        }
+
+        .pay-method-btn-global.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(134, 135, 195, 0.2);
+        }
     </style>
     <div id="priorityModal" class="modal-overlay" style="z-index: 3000; display:none; align-items:center; justify-content:center;">
         <div class="priority-majestic-card">
@@ -146,20 +182,31 @@
             <div class="priority-actions-centered">
                 <div class="priority-btn-grid">
                     <button onclick="handlePriorityAction('completed')" class="btn-premium btn-premium-success">GELDİ</button>
-                    <button onclick="handlePriorityAction('cancelled')" class="btn-premium btn-premium-danger">GELMEDİ</button>
+                    <button onclick="handlePriorityAction('missed')" class="btn-premium btn-premium-danger">GELMEDİ</button>
                 </div>
                 <button onclick="handlePriorityAction('hub')" class="btn-secondary priority-big-snooze">ONAY MERKEZİNE AL</button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts (Libraries already checked in header) -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
     
     <script>
         let overdueAppointments = [];
-        let seenAppointments = JSON.parse(localStorage.getItem('aptSeenList') || '[]');
+        let seenAppointments = (function() {
+            try {
+                const today = new Date().toDateString();
+                const storedDate = localStorage.getItem('aptSeenDate');
+                if (storedDate !== today) {
+                    localStorage.setItem('aptSeenDate', today);
+                    localStorage.setItem('aptSeenList', '[]');
+                    return [];
+                }
+                let list = JSON.parse(localStorage.getItem('aptSeenList') || '[]');
+                return Array.isArray(list) ? list.map(id => String(id)) : [];
+            } catch(e) { return []; }
+        })();
         let currentPriorityApt = null;
 
         // Toast ve Modal Sistemleri Artık header.php İçinde Merkezi Olarak Yönetiliyor
@@ -168,15 +215,17 @@
 
         // --- Approval Hub Logic ---
         function checkOverdue() {
-            $.get('../actions/check_overdue.php', function(data) {
-                const now = Date.now();
-                
-                // Onay Merkezi için filtrele (Snoozed olmayanlar)
-                overdueAppointments = data;
+            const d = new Date();
+            const clientDate = d.getFullYear() + '-' + (d.getMonth()+1).toString().padStart(2,'0') + '-' + d.getDate().toString().padStart(2,'0');
+            const nowTime = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+
+            $.get('../actions/check_overdue.php', { client_date: clientDate }, function(data) {
+                // Saniye farklarını elemek için saati 05:00 formatına çekip karşılaştırıyoruz
+                overdueAppointments = data.filter(a => a.appointment_time.substr(0,5) <= nowTime);
 
                 updateIndicator();
                 
-                // Proaktif Uyarıları Yönet (İlk kez görülenler)
+                // Proaktif Uyarılar (Tam vaktinde veya geçmiş olanlar için modal aç)
                 handleProactiveAlerts(overdueAppointments);
 
                 if (overdueAppointments.length > 0 && $('#approvalHub').is(':visible')) {
@@ -186,8 +235,8 @@
         }
 
         function handleProactiveAlerts(list) {
-            if ($('#priorityModal').is(':visible')) return;
-            const newApt = list.find(a => !seenAppointments.includes(a.id));
+            if ($('#priorityModal').is(':visible') || $('#globalModal').is(':visible')) return;
+            const newApt = list.find(a => !seenAppointments.includes(String(a.id)));
             if (newApt) {
                 currentPriorityApt = newApt;
                 $('#pri-name').text(newApt.name);
@@ -202,17 +251,18 @@
                     $('#pri-date').text(new Date().toLocaleDateString('tr-TR'));
                 }
                 
-                $('#priorityModal').fadeIn(300).css('display', 'flex');
+                // Flexbox uyumluluğu için özel görünürlük tetikleyici
+                $('#priorityModal').css('z-index', '99999').fadeIn(400).css('display', 'flex');
             }
         }
 
         function handlePriorityAction(action) {
             if (!currentPriorityApt) return;
-            const id = currentPriorityApt.id;
+            const id = String(currentPriorityApt.id);
 
             // Görüldü listesine ekle ki Popup bir daha otomatik çıkmasın
-            if (!seenAppointments.includes(id)) {
-                seenAppointments.push(id);
+            if (!seenAppointments.includes(String(id))) {
+                seenAppointments.push(String(id));
                 localStorage.setItem('aptSeenList', JSON.stringify(seenAppointments));
             }
 
@@ -229,11 +279,9 @@
 
         function updateIndicator() {
             const btn = $('#approval-hub-btn');
-            // Sadece 'Görülmüş' (seen) olanları Onay Merkezi bildiriminde say
-            const indicatorList = overdueAppointments.filter(a => seenAppointments.includes(a.id));
             
-            if (indicatorList.length > 0) {
-                $('#pending-count').text(indicatorList.length);
+            if (overdueAppointments.length > 0) {
+                $('#pending-count').text(overdueAppointments.length);
                 btn.css('display', 'flex');
             } else {
                 btn.hide();
@@ -278,7 +326,7 @@
                         <div class="priority-actions" style="margin-top: 20px;">
                             <div class="approval-btn-group">
                                 <button onclick="updateAptStatusHub(${a.id}, 'completed')" class="btn-premium btn-premium-success" style="justify-content: center;">GELDİ</button>
-                                <button onclick="updateAptStatusHub(${a.id}, 'cancelled')" class="btn-premium btn-premium-danger" style="justify-content: center;">GELMEDİ</button>
+                                <button onclick="updateAptStatusHub(${a.id}, 'missed')" class="btn-premium btn-premium-danger" style="justify-content: center;">GELMEDİ</button>
                             </div>
                         </div>
                     </div>
@@ -355,6 +403,25 @@
                                             <div id="status_net_price_display_global" style="font-size: 18px; font-weight: 900; color: var(--primary);">${parseFloat(a.service_price).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${currency}</div>
                                             <input type="hidden" id="status_final_price_global" value="${a.service_price}">
                                         </div>
+
+                                        <div style="margin-top: 20px;">
+                                            <label style="font-size: 10px; font-weight: 800; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">Ödeme Yöntemi Seçin</label>
+                                            <div class="payment-methods-grid-global">
+                                                <div class="pay-method-btn-global" onclick="selectPaymentMethodGlobal('cash', this)">
+                                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                                    <span>Nakit</span>
+                                                </div>
+                                                <div class="pay-method-btn-global" onclick="selectPaymentMethodGlobal('transfer', this)">
+                                                    <i class="fa-solid fa-building-columns"></i>
+                                                    <span>EFT/Havale</span>
+                                                </div>
+                                                <div class="pay-method-btn-global" onclick="selectPaymentMethodGlobal('card', this)">
+                                                    <i class="fa-solid fa-credit-card"></i>
+                                                    <span>Kredi Kartı</span>
+                                                </div>
+                                            </div>
+                                            <input type="hidden" id="selected_payment_method_global" value="">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -362,7 +429,7 @@
 
                         const footer = `
                             <div class="confirm-footer-mobile" style="margin-top: 20px;">
-                                <button onclick="executeStatusUpdateGlobal(${id}, '${status}')" class="btn-premium">Tahsilatı Onayla ve Tamamla</button>
+                                <button id="complete-payment-btn-global" onclick="executeStatusUpdateGlobal(${id}, '${status}')" class="btn-premium" style="opacity: 0.5; cursor: not-allowed;" disabled>Tahsilatı Onayla ve Tamamla</button>
                                 <button onclick="closeGlobalModal()" class="btn-secondary">Vazgeç</button>
                             </div>
                         `;
@@ -375,6 +442,15 @@
             }
         }
 
+        function selectPaymentMethodGlobal(method, el) {
+            $('.pay-method-btn-global').removeClass('active');
+            $(el).addClass('active');
+            $('#selected_payment_method_global').val(method);
+            
+            // Aktif et butonu
+            $('#complete-payment-btn-global').prop('disabled', false).css({'opacity': '1', 'cursor': 'pointer'});
+        }
+
         function executeStatusUpdateGlobal(id, status) {
             const data = { id: id, status: status };
             
@@ -383,6 +459,7 @@
                 data.discount_type = $('#status_discount_type_global').val();
                 data.discount_value = $('#status_discount_value_global').val();
                 data.service_price = $('#status_final_price_global').val();
+                data.payment_method = $('#selected_payment_method_global').val();
             }
 
             $.post('../actions/appointment_status.php', data, function(res) {
@@ -391,8 +468,8 @@
                     removeAptFromLocal(id);
                     closeGlobalModal();
                     
-                    if (!seenAppointments.includes(id)) {
-                        seenAppointments.push(id);
+                    if (!seenAppointments.includes(String(id))) {
+                        seenAppointments.push(String(id));
                         localStorage.setItem('aptSeenList', JSON.stringify(seenAppointments));
                     }
 

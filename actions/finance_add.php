@@ -12,8 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     try {
-        $stmt = $db->prepare("INSERT INTO finance (amount, type, description) VALUES (?, ?, ?)");
-        $stmt->execute([$amount, $type, $description]);
+        $payment_method = clean($_POST['payment_method'] ?? 'cash');
+        $now = date('Y-m-d H:i:s');
+        $stmt = $db->prepare("INSERT INTO finance (amount, type, description, payment_method, created_at) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$amount, $type, $description, $payment_method, $now]);
         json_response('success', 'İşlem başarıyla kaydedildi.');
     } catch (PDOException $e) {
         json_response('error', 'Hata: ' . $e->getMessage());

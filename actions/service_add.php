@@ -6,6 +6,7 @@ check_login();
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = clean($_POST['name'] ?? '');
     $description = clean($_POST['description'] ?? '');
+    $total_sessions = max(1, (int)($_POST['total_sessions'] ?? 1));
     $base_price = (float)($_POST['base_price'] ?? 0);
     $discount_type = clean($_POST['discount_type'] ?? 'none');
     $discount_value = (float)($_POST['discount_value'] ?? 0);
@@ -27,8 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     try {
-        $stmt = $db->prepare("INSERT INTO services (name, description, base_price, discount_type, discount_value, price, color) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $description, $base_price, $discount_type, $discount_value, $price, $color]);
+        $stmt = $db->prepare("INSERT INTO services (name, description, total_sessions, base_price, discount_type, discount_value, price, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$name, $description, $total_sessions, $base_price, $discount_type, $discount_value, $price, $color]);
         json_response('success', 'Hizmet başarıyla eklendi.');
     } catch (PDOException $e) {
         json_response('error', 'Hata: ' . $e->getMessage());

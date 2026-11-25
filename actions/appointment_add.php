@@ -74,9 +74,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             json_response('error', 'En az bir geçerli hizmet seçilmelidir.');
         }
 
-        // 4. Randevuyu kaydedelim
-        $stmt = $db->prepare("INSERT INTO appointments (customer_id, user_id, staff_id, service_id, category_id, appointment_date, appointment_time, base_price, discount_type, discount_value, service_price, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$customer_id, $user_id, $staff_id, $service_id, $category_id, $appointment_date, $appointment_time, $base_price, $discount_type, $discount_value, $total_price, $notes]);
+        // 4. Randevuyu kaydedelim (Paket ilişkisi dahil)
+        $package_id = !empty($_POST['package_id']) ? (int)$_POST['package_id'] : null;
+        $is_package_session = ($package_id > 0) ? 1 : 0;
+
+        $stmt = $db->prepare("INSERT INTO appointments (customer_id, user_id, staff_id, service_id, category_id, package_id, is_package_session, appointment_date, appointment_time, base_price, discount_type, discount_value, service_price, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$customer_id, $user_id, $staff_id, $service_id, $category_id, $package_id, $is_package_session, $appointment_date, $appointment_time, $base_price, $discount_type, $discount_value, $total_price, $notes]);
         $appointment_id = $db->lastInsertId();
 
         // 5. Ek Hizmetleri (varsa) tabloya kaydedelim

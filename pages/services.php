@@ -21,7 +21,7 @@ $categories = $db->query("SELECT * FROM appointment_categories WHERE is_deleted 
         </div>
     </div>
 
-    <div style="overflow-x: auto;" class="premium-table-scroll">
+    <div style="overflow-x: auto; overflow-y: auto; flex: 1; min-height: 0;" class="premium-table-scroll custom-scroll">
         <table style="width: 100%; border-collapse: collapse; text-align: left; table-layout: fixed;">
             <thead>
                 <tr style="color: var(--text-muted); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(165,166,216,0.1);">
@@ -57,8 +57,13 @@ $categories = $db->query("SELECT * FROM appointment_categories WHERE is_deleted 
                     <tr class="appointment-row <?= !$is_active ? 'row-passive' : '' ?>" onclick="if(window.innerWidth < 1024) viewService(<?= $svc_id ?>)" style="border-bottom: 1px solid rgba(165, 166, 216, 0.05); transition: all 0.2s;">
                         <td style="padding: 18px 10px;">
                             <div class="patient-block-card" style="background: rgba(134, 135, 195, 0.1);">
-                                <div style="display: flex; align-items: center; gap: 12px; overflow: hidden;">
+                                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; flex-wrap: wrap;">
                                     <span class="patient-name" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; font-weight: 700; max-width: 100%; color: <?= $row['color'] ?: 'var(--primary)' ?>;"><?= clean($row['name']) ?></span>
+                                    <?php if($row['total_sessions'] > 1): ?>
+                                        <span style="background: rgba(39, 174, 96, 0.15); color: #219653; font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                            <i class="fa-solid fa-box-open" style="font-size: 10px;"></i> <?= $row['total_sessions'] ?> Seanslık Paket
+                                        </span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </td>
@@ -130,6 +135,13 @@ function addServiceModal() {
                     <label><?= __('net_price') ?></label>
                     <div id="add_net_price_display" style="height: 45px; display: flex; align-items: center; padding: 0 15px; background: rgba(134, 135, 195, 0.05); border-radius: 12px; font-weight: 800; color: var(--primary); border: 1px solid rgba(134, 135, 195, 0.1);">0.00 <?= $currency ?></div>
                     <input type="hidden" name="price" id="add_price">
+                </div>
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <label>Paket Seans Sayısı</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="number" name="total_sessions" id="add_total_sessions" class="form-control" value="1" min="1" placeholder="1 = Tek Seans, 10 = 10 Seanslık Paket" required>
+                    <span style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">(1 = Tek Seans, >1 = Paket)</span>
                 </div>
             </div>
             <div class="form-group" style="margin-top: 15px;">
@@ -228,6 +240,13 @@ function editServiceModal(id) {
                             <label><?= __('net_price') ?></label>
                             <div id="edit_net_price_display" style="height: 45px; display: flex; align-items: center; padding: 0 15px; background: rgba(134, 135, 195, 0.05); border-radius: 12px; font-weight: 800; color: var(--primary); border: 1px solid rgba(134, 135, 195, 0.1);">0.00 <?= $currency ?></div>
                             <input type="hidden" name="price" id="edit_price" value="${s.price}">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>Paket Seans Sayısı</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="number" name="total_sessions" id="edit_total_sessions" class="form-control" value="${s.total_sessions || 1}" min="1" required>
+                            <span style="font-size: 12px; color: var(--text-muted); white-space: nowrap;">(1 = Tek Seans, >1 = Paket)</span>
                         </div>
                     </div>
                     <div class="form-group" style="margin-top: 15px;">
@@ -367,6 +386,16 @@ function viewService(id) {
                         <div class="detail-info-content">
                             <span class="detail-label">${s.discount_type !== 'none' ? '<?= __('net_price') ?>' : '<?= __('price') ?>'}</span>
                             <span class="detail-value" style="font-weight: 800; color: #10b981;">${parseFloat(s.price).toLocaleString('tr-TR', {minimumFractionDigits: 2})} ${globalCurrency}</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-item-card">
+                        <div class="detail-icon-box" style="color: #27ae60;">
+                            <i class="fa-solid fa-box-open"></i>
+                        </div>
+                        <div class="detail-info-content">
+                            <span class="detail-label">Seans Türü</span>
+                            <span class="detail-value" style="font-weight: 700; color: #27ae60;">${s.total_sessions > 1 ? s.total_sessions + ' Seanslık Paket' : 'Tek Seans'}</span>
                         </div>
                     </div>
 
