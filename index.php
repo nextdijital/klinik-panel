@@ -190,9 +190,14 @@ redirect_if_logged_in();
                             }, 5000);
                         }
                     },
-                    error: function() {
+                    error: function(xhr) {
+                        let msg = 'Sistem hatası oluştu.';
+                        try {
+                            const parsed = JSON.parse(xhr.responseText);
+                            if (parsed && parsed.message) msg = parsed.message;
+                        } catch(err) {}
                         $defaultSide.fadeOut(300, function() {
-                            $errorSide.find('.error-msg').text('Sistem hatası oluştu.');
+                            $errorSide.find('.error-msg').text(msg);
                             $errorSide.fadeIn(300);
                         });
                         $btn.prop('disabled', false).find('span').text('<?= __('login_btn') ?>');

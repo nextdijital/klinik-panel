@@ -1,8 +1,4 @@
 <?php
-// Gzip Output Compression (Sayfa yanıt boyutunu %90+ küçülterek anında yüklenmesini sağlar)
-if (extension_loaded('zlib') && !ini_get('zlib.output_compression')) {
-    ini_set('zlib.output_compression', '1');
-}
 ob_start();
 // functions.php - Core functions for KlinikMod
 
@@ -137,8 +133,11 @@ function clean($data) {
 
 // JSON Response helper
 function json_response($status, $message, $data = []) {
-    header('Content-Type: application/json');
-    echo json_encode(['status' => $status, 'message' => $message, 'data' => $data]);
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['status' => $status, 'message' => $message, 'data' => $data], JSON_UNESCAPED_UNICODE);
     exit();
 }
 
