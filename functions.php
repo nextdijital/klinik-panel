@@ -41,6 +41,59 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once __DIR__ . '/config/db.php';
 
+// Otomatik Veritabanı Şema Senkronizasyonu (Eksik tablo ve sütunları otomatik tamamlar)
+if (isset($db)) {
+    try {
+        // 1. services.total_sessions kontrolü
+        $col_check = $db->query("SHOW COLUMNS FROM services LIKE 'total_sessions'")->fetch();
+        if (!$col_check) {
+            $db->exec("ALTER TABLE services ADD COLUMN total_sessions INT NOT NULL DEFAULT 1");
+        }
+
+        // 2. appointments.package_id kontrolü
+        $col_pkg = $db->query("SHOW COLUMNS FROM appointments LIKE 'package_id'")->fetch();
+        if (!$col_pkg) {
+            $db->exec("ALTER TABLE appointments ADD COLUMN package_id INT DEFAULT NULL");
+        }
+
+        // 3. customer_packages tablosu kontrolü
+        $db->exec("CREATE TABLE IF NOT EXISTS `customer_packages` (
+          `id` int(11) NOT NULL AUTO_INCREMENT,
+          `customer_id` int(11) NOT NULL,
+          `service_id` int(11) DEFAULT NULL,
+          `package_name` varchar(150) NOT NULL,
+          `total_sessions` int(11) NOT NULL DEFAULT 1,
+          `used_sessions` int(11) NOT NULL DEFAULT 0,
+          `price` decimal(10,2) NOT NULL DEFAULT 0.00,
+          `payment_status` enum('paid','partial','unpaid') DEFAULT 'paid',
+          `start_date` date NOT NULL,
+          `end_date` date DEFAULT NULL,
+          `status` enum('active','completed','cancelled') DEFAULT 'active',
+          `notes` text DEFAULT NULL,
+          `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+          PRIMARY KEY (`id`),
+          KEY `idx_customer` (`customer_id`),
+          KEY `idx_status` (`status`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+        // 4. Performans indeksleri
+        $idx_check = $db->query("SHOW INDEX FROM appointments WHERE Key_name = 'idx_appt_customer_service_session'")->fetch();
+        if (!$idx_check) {
+            $db->exec("CREATE INDEX idx_appt_customer_service_session ON appointments(customer_id, service_id, is_deleted, status, appointment_date, appointment_time, id)");
+        }
+        $idx_fin1 = $db->query("SHOW INDEX FROM finance WHERE Key_name = 'idx_finance_created_at'")->fetch();
+        if (!$idx_fin1) {
+            $db->exec("CREATE INDEX idx_finance_created_at ON finance(created_at)");
+        }
+        $idx_fin2 = $db->query("SHOW INDEX FROM finance WHERE Key_name = 'idx_finance_type'")->fetch();
+        if (!$idx_fin2) {
+            $db->exec("CREATE INDEX idx_finance_type ON finance(type)");
+        }
+    } catch (Exception $e) {
+        // Hata durumunda akışı durdurma
+    }
+}
+
 // Authentication Check
 function check_login() {
     if (!isset($_SESSION['user_id'])) {
