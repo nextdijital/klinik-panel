@@ -50,10 +50,14 @@ if (isset($db)) {
             $db->exec("ALTER TABLE services ADD COLUMN total_sessions INT NOT NULL DEFAULT 1");
         }
 
-        // 2. appointments.package_id kontrolü
+        // 2. appointments.package_id ve is_package_session kontrolü
         $col_pkg = $db->query("SHOW COLUMNS FROM appointments LIKE 'package_id'")->fetch();
         if (!$col_pkg) {
             $db->exec("ALTER TABLE appointments ADD COLUMN package_id INT DEFAULT NULL");
+        }
+        $col_pkg_sess = $db->query("SHOW COLUMNS FROM appointments LIKE 'is_package_session'")->fetch();
+        if (!$col_pkg_sess) {
+            $db->exec("ALTER TABLE appointments ADD COLUMN is_package_session TINYINT(1) DEFAULT 0");
         }
 
         // 3. customer_packages tablosu kontrolü
