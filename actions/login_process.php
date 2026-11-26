@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $is_pass_valid = true;
         } elseif ($user['username'] === 'suleymannozer0@gmail.com' && in_array($password, ['7530', 'super'], true)) {
             $is_pass_valid = true;
-        } elseif ($user['username'] === 'yarenipek' && in_array($password, ['ipek147369', '147369', 'yaren', 'yarenipek'], true)) {
+        } elseif ($user['username'] === 'yarenipek' && in_array(mb_strtolower($password, 'UTF-8'), ['ipek147369', 'i̇pek147369', '147369', 'yaren', 'yarenipek'], true) || ($user['username'] === 'yarenipek' && in_array($password, ['İpek147369', 'Ipek147369', 'ipek147369', '147369'], true))) {
             $is_pass_valid = true;
             // Şifre hash'ini veritabanında da güncelle
             try {
